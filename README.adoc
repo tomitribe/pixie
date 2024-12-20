@@ -1,0 +1,289 @@
+= Trixie System
+
+Consider this similar to a linux kernel. Only the most critical
+code and minimum dependencies. Adding things here is a major
+architectural decision and should be discussed.
+
+This is both for manageability and for learning purposes.  If you
+are new to the code, you should come straight here and learn this
+code first.  Once you get the hang of this code you will fundamentally
+understand how everything is wired together as well as the "event bus"
+logic that makes all the code function.
+
+== Configuration
+
+Trixie is bootstrapped from a plain properties file.  Inside the properties
+is a complete definition of the system.  Configuration files look similar to
+this:
+
+[source,properties]
+----
+jon=new://com.tomitribe.trixie.example.Person
+jon.age = 46
+jon.address=@home
+
+home=new://com.tomitribe.trixie.example.Address
+home.street=823 Roosevelt Street
+home.city=River Falls
+home.state=WI
+home.zipcode=54022
+----
+
+== Components
+
+The sample configuration above references two classes that must be built:
+
+ - com.tomitribe.trixie.example.Person
+ - com.tomitribe.trixie.example.Address
+
+Here is how they would be defined.  First, let's start with `Address`.  Trixie would
+build this component first because it doesn't have any references to any other
+components, so is the least likely to cause a circular reference.
+
+[source,java]
+----
+public static class Address {
+    private final String street;
+    private final String city;
+    private final State state;
+    private final int zipcode;
+    private final String country;
+
+    public Address(@Option("street") final String street,
+                   @Option("city") final String city,
+                   @Option("state") final State state,
+                   @Option("zipcode") final int zipcode,
+                   @Option("country") @Default("USA") final String country) {
+        this.street = street;
+        this.city = city;
+        this.state = state;
+        this.zipcode = zipcode;
+        this.country = country;
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public int getZipcode() {
+        return zipcode;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+}
+----
+
+Notice all the fields are final.  Trixie only supports constructor injection.  This
+allows us to both create safe runtime objects whose fields are final, but it also
+gives us the ability to test our components without Trixie.
+
+=== @Option
+
+Also note that Trixie supports injecting configuration properties via `@Option`.  The
+value of the annotation points to the particular property you want.  It can be either
+a relative reference as shown above, or an absolute reference.
+
+Options are first assumed to be relative, so given `@Option("city")` on a component
+whose name is `jon`, Trixie would imply `jon.` in the name and first look for this
+property:
+
+ - `jon.city`
+
+If this does not succeed, Trixie will simply look in the global configuration for:
+
+ -  `city`
+
+Of course, many components may reference the same property `city`.  Using `jon.city`
+would be the only way to target it specifically to the `Person` named `jon`
+
+==== @Option types
+
+Options may be `String`, `int`, `float` and other kinds of Java primitives.  They also
+can be any object type that matches either of these rules:
+
+ - Has a public constructor that takes `String`
+ - Has a state method that takes `String` and returns an instance of itself
+
+This allows Trixie to support Enums, classes like `URI.create(String)` and more.
+
+=== @Default
+
+In the above `@Option("city")`, if `jon.city` and `city` are not found, Trixie will look
+for an `@Default` annotation on the same parameter and use that for the default setting.
+
+This allows Trixie configuration files to be small and only contain what the user has chosen
+to manage.
+
+=== @Nullable
+
+`@Nullable` is a qualifier used to indicate an optional parameter is null.
+This way, you don't need to add a `@Default`  annotation with a constant you will then have to test in the code.
+
+For instance in `@Option("city") @Nullable final String city`, if city hasn't been specified, city will be `null`.
+
+IMPORTANT: It is invalid to use both `@Default` and `@Nullable`.
+
+NOTE: `@Nullable` can also be applied to component injections.
+Trixie will then look in the system instance if the component is available.
+If not, it won't try to lazily create an instance to inject it.
+
+=== @Name
+
+`@Name` is used on a parameter to get the name of the current component injected.
+
+```
+public static class Person {
+
+    private final String name;
+    private final int age;
+
+    public Person(@Name final String name,
+                  @Option("age") final int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+}
+```
+
+With the following configuration
+
+```
+alfred = new://Person
+alfred.age = 20
+
+john = new://Person
+john.age = 52
+
+nick = new://Person
+nick.age = 75
+```
+
+With the `Person` class above and the configuration above, Trixie will instantiate 3 `Person` instances.
+The first instance will get `alfred` for the injected name, next instance will respectively receive `john` and `nick`.
+
+=== @Component
+
+One component may reference another component via annotating the respective constructor
+parameter with `@Component` this tells Trixie to look for a component of that specific
+name and type.
+
+[source,java]
+----
+public static class Person {
+
+    private final String name;
+    private final int age;
+    private final Address address;
+
+    public Person(@Name final String name,
+                  @Option("age") final int age,
+                  @Component("address") final Address address) {
+        this.name = name;
+        this.age = age;
+        this.address = address;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+}
+----
+
+In the original configuration example, our `Person` named `jon` is configured to need
+an address called `@home`.
+
+----
+jon.address=@home
+----
+
+The `@` symbol tells Trixie that the configuration value points to another component
+named home.
+
+If no `Address` component exists, Trixie will look to see if `Address` is a class that
+Trixie can build.  If so, Trixie will attempt to create one on the fly hoping there
+are enough defaults and configuration to fully create the object.  If not, Trixie will
+fail and the system will not start up.
+
+== No Property lookups
+
+Trixie intentionally does not expose any `getProperty` style of methods that allow
+configuration values to be looked up.  You must create a simple object with a constructor
+annotated with `@Option` and ask Trixie to create it.
+
+This limitation is intentional so that configuration properties can only be referenced
+via strongly typed annotations, which means we can statically know the name and type every
+single available configuration property the system supports.
+
+We don't want to give up this advantage for the ease of doing string lookups.
+
+This doesn't cost us anything and in fact it adds considerably to properties management.  
+
+Let's say we have good reason to create "global" properties.  We'd normally feel compelled
+to prefix everything with `trixie.`, however let's imagine a comprimise where we use the module
+name as the prefix.
+
+Say for example we have three modules:
+
+ - trixie-system
+ - trixie-core
+ - trixie-openejb
+
+Let's now imagine this pattern as a very clever way to achive module-scoped properties.
+
+[source,properties]
+----
+system=new://com.tomitribe.trixie.system.SystemOptions
+system.debug=true
+system.licence=1234-2315123412-12316125
+system.keystore=somepath.keys
+
+core=new://com.tomitribe.trixie.core.CoreOptions
+core.dateformat=YYYY-mm-dd
+core.timeunit=NANOSECONDS
+core.checkinterval=10 seconds
+
+openejb=new://com.tomitribe.trixie.openejb.OpenEjbOptions
+openejb.debug=true
+openejb.database=MONITOR
+openejb.entitymanager=INGORE
+----
+
+There are interesting points about the above pattern:
+
+ - If a user specifies a property that doesn't exist, an exception will be thrown.  A common issue with normal properties is when the code that looked it up and acted upon it is deleted.  There's no indication to the user they may be attempting to use a "dead" property.  Here, the user cannot be mislead by specifying a module property that does not exist.
+ 
+ - Code remains clean.  To reference the property in various places in the module you would need to get the respective "Options" class injected.  If you do not have that module as a dependency, you cannot do this.  In the above imaginary scenario, code in `trixie-openejb` can see `OpenEjbOptions`, `CoreOptions` and `SystemOptions`.  However, code from `trixie-system` cannot see `OpenEjbOptions` or even `CoreOptions`.
+ 
+ - You always know where to look.  If a property doesn't fit anywhere in particular, it goes into the module's "Options" class.  There's no time wasted by over-thinking how to manage the property and where it belongs.  Further, you can go to the Options class and do a "Find Usages" in the IDE to see who is using the property and how.
+ 
+ - Easy refactoring.  If you have more than one bit of code using the property and you wish to rename the property, there are no string usages of it to worry about.  You can change its type or name very easily using regular refactoring features of the IDE.  No string find-and-replace.
+ 
+ - Easy Deprecation.  It would be quite easy for us to add annotations to support deprecating properties in favor of new names.  This could involve logging a warning to the user, updating the config and proceeding forward.
+
+
