@@ -21,12 +21,12 @@
   <parent>
     <groupId>org.tomitribe</groupId>
     <artifactId>oss-parent</artifactId>
-    <version>5</version>
+    <version>7</version>
   </parent>
 
   <groupId>org.tomitribe.pixie</groupId>
   <artifactId>pixie</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.0-SNAPSHOT</version>
   <name>Tomitribe Pixie</name>
 
   <scm>
