@@ -103,7 +103,7 @@ public class System implements Closeable {
      * It is ok to call this method from tests, but do not call it from production code.
      * <p>
      * Yes, it will work.  Yes, it is neat.  No, we don't want things created the user
-     * cannot see.  Current efforts are to put all components in a single trixie.properties
+     * cannot see.  Current efforts are to put all components in a single pixie.properties
      * file the user can update.
      */
     public void load(final Properties properties) {

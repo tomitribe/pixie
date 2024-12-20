@@ -1,28 +1,21 @@
-= Trixie System
+= Pixie
 
-Consider this similar to a linux kernel. Only the most critical
-code and minimum dependencies. Adding things here is a major
-architectural decision and should be discussed.
-
-This is both for manageability and for learning purposes.  If you
-are new to the code, you should come straight here and learn this
-code first.  Once you get the hang of this code you will fundamentally
-understand how everything is wired together as well as the "event bus"
-logic that makes all the code function.
+Pixie replaces any scenario where you would use reflection to instantiate a Java object.
+Handles configuration, dependency injection and events.
 
 == Configuration
 
-Trixie is bootstrapped from a plain properties file.  Inside the properties
+Pixie is bootstrapped from a plain properties file.  Inside the properties
 is a complete definition of the system.  Configuration files look similar to
 this:
 
 [source,properties]
 ----
-jon=new://com.tomitribe.trixie.example.Person
+jon=new://org.example.Person
 jon.age = 46
 jon.address=@home
 
-home=new://com.tomitribe.trixie.example.Address
+home=new://org.example.Address
 home.street=823 Roosevelt Street
 home.city=River Falls
 home.state=WI
@@ -33,10 +26,10 @@ home.zipcode=54022
 
 The sample configuration above references two classes that must be built:
 
- - com.tomitribe.trixie.example.Person
- - com.tomitribe.trixie.example.Address
+ - org.example.Person
+ - org.example.Address
 
-Here is how they would be defined.  First, let's start with `Address`.  Trixie would
+Here is how they would be defined.  First, let's start with `Address`.  Pixie would
 build this component first because it doesn't have any references to any other
 components, so is the least likely to cause a circular reference.
 
@@ -83,23 +76,23 @@ public static class Address {
 }
 ----
 
-Notice all the fields are final.  Trixie only supports constructor injection.  This
+Notice all the fields are final.  Pixie only supports constructor injection.  This
 allows us to both create safe runtime objects whose fields are final, but it also
-gives us the ability to test our components without Trixie.
+gives us the ability to test our components without Pixie.
 
 === @Option
 
-Also note that Trixie supports injecting configuration properties via `@Option`.  The
+Also note that Pixie supports injecting configuration properties via `@Option`.  The
 value of the annotation points to the particular property you want.  It can be either
 a relative reference as shown above, or an absolute reference.
 
 Options are first assumed to be relative, so given `@Option("city")` on a component
-whose name is `jon`, Trixie would imply `jon.` in the name and first look for this
+whose name is `jon`, Pixie would imply `jon.` in the name and first look for this
 property:
 
  - `jon.city`
 
-If this does not succeed, Trixie will simply look in the global configuration for:
+If this does not succeed, Pixie will simply look in the global configuration for:
 
  -  `city`
 
@@ -114,14 +107,14 @@ can be any object type that matches either of these rules:
  - Has a public constructor that takes `String`
  - Has a state method that takes `String` and returns an instance of itself
 
-This allows Trixie to support Enums, classes like `URI.create(String)` and more.
+This allows Pixie to support Enums, classes like `URI.create(String)` and more.
 
 === @Default
 
-In the above `@Option("city")`, if `jon.city` and `city` are not found, Trixie will look
+In the above `@Option("city")`, if `jon.city` and `city` are not found, Pixie will look
 for an `@Default` annotation on the same parameter and use that for the default setting.
 
-This allows Trixie configuration files to be small and only contain what the user has chosen
+This allows Pixie configuration files to be small and only contain what the user has chosen
 to manage.
 
 === @Nullable
@@ -134,7 +127,7 @@ For instance in `@Option("city") @Nullable final String city`, if city hasn't be
 IMPORTANT: It is invalid to use both `@Default` and `@Nullable`.
 
 NOTE: `@Nullable` can also be applied to component injections.
-Trixie will then look in the system instance if the component is available.
+Pixie will then look in the system instance if the component is available.
 If not, it won't try to lazily create an instance to inject it.
 
 === @Name
@@ -176,13 +169,13 @@ nick = new://Person
 nick.age = 75
 ```
 
-With the `Person` class above and the configuration above, Trixie will instantiate 3 `Person` instances.
+With the `Person` class above and the configuration above, Pixie will instantiate 3 `Person` instances.
 The first instance will get `alfred` for the injected name, next instance will respectively receive `john` and `nick`.
 
 === @Component
 
 One component may reference another component via annotating the respective constructor
-parameter with `@Component` this tells Trixie to look for a component of that specific
+parameter with `@Component` this tells Pixie to look for a component of that specific
 name and type.
 
 [source,java]
@@ -222,19 +215,19 @@ an address called `@home`.
 jon.address=@home
 ----
 
-The `@` symbol tells Trixie that the configuration value points to another component
+The `@` symbol tells Pixie that the configuration value points to another component
 named home.
 
-If no `Address` component exists, Trixie will look to see if `Address` is a class that
-Trixie can build.  If so, Trixie will attempt to create one on the fly hoping there
-are enough defaults and configuration to fully create the object.  If not, Trixie will
+If no `Address` component exists, Pixie will look to see if `Address` is a class that
+Pixie can build.  If so, Pixie will attempt to create one on the fly hoping there
+are enough defaults and configuration to fully create the object.  If not, Pixie will
 fail and the system will not start up.
 
 == No Property lookups
 
-Trixie intentionally does not expose any `getProperty` style of methods that allow
+Pixie intentionally does not expose any `getProperty` style of methods that allow
 configuration values to be looked up.  You must create a simple object with a constructor
-annotated with `@Option` and ask Trixie to create it.
+annotated with `@Option` and ask Pixie to create it.
 
 This limitation is intentional so that configuration properties can only be referenced
 via strongly typed annotations, which means we can statically know the name and type every
@@ -245,30 +238,30 @@ We don't want to give up this advantage for the ease of doing string lookups.
 This doesn't cost us anything and in fact it adds considerably to properties management.  
 
 Let's say we have good reason to create "global" properties.  We'd normally feel compelled
-to prefix everything with `trixie.`, however let's imagine a comprimise where we use the module
+to prefix everything with `pixie.`, however let's imagine a comprimise where we use the module
 name as the prefix.
 
 Say for example we have three modules:
 
- - trixie-system
- - trixie-core
- - trixie-openejb
+ - pixie-system
+ - pixie-core
+ - pixie-openejb
 
-Let's now imagine this pattern as a very clever way to achive module-scoped properties.
+Let's now imagine this pattern as a very clever way to archive module-scoped properties.
 
 [source,properties]
 ----
-system=new://com.tomitribe.trixie.system.SystemOptions
+system=new://pixie.org.tomitribe.SystemOptions
 system.debug=true
 system.licence=1234-2315123412-12316125
 system.keystore=somepath.keys
 
-core=new://com.tomitribe.trixie.core.CoreOptions
+core=new://com.tomitribe.pixie.core.CoreOptions
 core.dateformat=YYYY-mm-dd
 core.timeunit=NANOSECONDS
 core.checkinterval=10 seconds
 
-openejb=new://com.tomitribe.trixie.openejb.OpenEjbOptions
+openejb=new://com.tomitribe.pixie.openejb.OpenEjbOptions
 openejb.debug=true
 openejb.database=MONITOR
 openejb.entitymanager=INGORE
@@ -278,7 +271,7 @@ There are interesting points about the above pattern:
 
  - If a user specifies a property that doesn't exist, an exception will be thrown.  A common issue with normal properties is when the code that looked it up and acted upon it is deleted.  There's no indication to the user they may be attempting to use a "dead" property.  Here, the user cannot be mislead by specifying a module property that does not exist.
  
- - Code remains clean.  To reference the property in various places in the module you would need to get the respective "Options" class injected.  If you do not have that module as a dependency, you cannot do this.  In the above imaginary scenario, code in `trixie-openejb` can see `OpenEjbOptions`, `CoreOptions` and `SystemOptions`.  However, code from `trixie-system` cannot see `OpenEjbOptions` or even `CoreOptions`.
+ - Code remains clean.  To reference the property in various places in the module you would need to get the respective "Options" class injected.  If you do not have that module as a dependency, you cannot do this.  In the above imaginary scenario, code in `pixie-openejb` can see `OpenEjbOptions`, `CoreOptions` and `SystemOptions`.  However, code from `pixie-system` cannot see `OpenEjbOptions` or even `CoreOptions`.
  
  - You always know where to look.  If a property doesn't fit anywhere in particular, it goes into the module's "Options" class.  There's no time wasted by over-thinking how to manage the property and where it belongs.  Further, you can go to the Options class and do a "Find Usages" in the IDE to see who is using the property and how.
  

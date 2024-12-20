@@ -18,15 +18,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Trixie {
+public class Pixie {
 
-    private static final Logger LOGGER = Logger.getLogger(Trixie.class.getSimpleName());
+    private static final Logger LOGGER = Logger.getLogger(Pixie.class.getSimpleName());
 
     private static final System SYSTEM = new System();
 
     private static final AtomicBoolean loaded = new AtomicBoolean();
     
-    private Trixie() {
+    private Pixie() {
         // no-op
         // Trixie can't be instantiated.
     }
@@ -39,7 +39,7 @@ public class Trixie {
      * It is ok to call this method from tests, but do not call it from production code.
      * <p>
      * Yes, it will work.  Yes, it is neat.  No, we don't want things created the user
-     * cannot see.  Current efforts are to put all components in a single trixie.properties
+     * cannot see.  Current efforts are to put all components in a single pixie.properties
      * file the user can update.
      */
     public static void load(final Properties properties) {
