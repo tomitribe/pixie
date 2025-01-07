@@ -15,6 +15,7 @@ package org.tomitribe.pixie;
 
 import org.junit.Test;
 import org.tomitribe.pixie.comp.Component;
+import org.tomitribe.pixie.comp.ConstructionFailedException;
 import org.tomitribe.pixie.comp.Default;
 import org.tomitribe.pixie.comp.Name;
 import org.tomitribe.pixie.comp.Nullable;
@@ -111,6 +112,10 @@ public class InstanceBuilderTest {
 
     }
 
+    /**
+     * Specify the value of the objects @Name parameter via passing
+     * it in via the builder(class, string) method
+     */
     @Test
     public void name() throws Exception {
 
@@ -133,11 +138,74 @@ public class InstanceBuilderTest {
 
     }
 
+    /**
+     * Do not specify the component name for our reference to Address.
+     * Let the system resolve a valid value by type alone
+     */
     @Test
     public void typeRef() throws Exception {
 
         final Person person = Instance.builder(Person.class)
                 .option("age", "37")
+                .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .build();
+
+        assertNotNull(person);
+        assertEquals("instance", person.getName());
+        assertEquals(37, person.getAge().intValue());
+
+        final Address address = person.getAddress();
+        assertNotNull(address);
+        assertEquals("820 Roosevelt Street", address.getStreet());
+        assertEquals("River Falls", address.getCity());
+        assertEquals(State.WI, address.getState());
+        assertEquals(54022, address.getZipcode());
+        assertEquals("USA", address.getCountry());
+    }
+
+    /**
+     * Do not specify a name for the Address instance we add AND
+     * Do not specify the component name for our reference to Address.
+     */
+    @Test
+    public void unamedTypeRef() throws Exception {
+
+        final Person person = Instance.builder(Person.class)
+                .option("age", "37")
+                .add(new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .build();
+
+        assertNotNull(person);
+        assertEquals("instance", person.getName());
+        assertEquals(37, person.getAge().intValue());
+
+        final Address address = person.getAddress();
+        assertNotNull(address);
+        assertEquals("820 Roosevelt Street", address.getStreet());
+        assertEquals("River Falls", address.getCity());
+        assertEquals(State.WI, address.getState());
+        assertEquals(54022, address.getZipcode());
+        assertEquals("USA", address.getCountry());
+    }
+
+    @Test(expected = ConstructionFailedException.class)
+    public void failOnUnusedProperties() throws Exception {
+
+        Instance.builder(Person.class)
+                .option("age", "37")
+                .option("height", "70")
+                .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .build();
+
+    }
+
+    @Test
+    public void warnOnUnusedProperties() throws Exception {
+
+        final Person person = Instance.builder(Person.class)
+                .warnOnUnusedProperties()
+                .option("age", "37")
+                .option("height", "70")
                 .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
