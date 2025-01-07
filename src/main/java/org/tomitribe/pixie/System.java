@@ -393,7 +393,7 @@ public class System implements Closeable {
         return observerManager.removeObserver(observer);
     }
 
-    public Declaration createDeclaration(final Map.Entry<String, String> entry) {
+    private Declaration createDeclaration(final Map.Entry<String, String> entry) {
         final Class<?> clazz = loadComponentClass(entry);
         final String key = entry.getKey();
 
