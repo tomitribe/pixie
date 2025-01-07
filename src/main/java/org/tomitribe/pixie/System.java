@@ -407,8 +407,6 @@ public class System implements Closeable {
         try {
             final Declaration declaration = new Declaration(key, clazz);
 
-            loadAnnotatedDefaults(declaration);
-
             issues.addAll(checkForNullableWithDefault(declaration));
 
             applyImplicitOverrides(declaration);
@@ -545,7 +543,7 @@ public class System implements Closeable {
         return loadDeclarationClass(className);
     }
 
-    private <T> void loadAnnotatedDefaults(final Declaration<T> declaration) {
+    private static <T> void loadAnnotatedDefaults(final Declaration<T> declaration) {
         for (final Parameter parameter : declaration.constructor.getParameters()) {
             final String defaultValue = getDefault(parameter);
             final boolean isNullable = parameter.isAnnotationPresent(Nullable.class);
@@ -566,7 +564,7 @@ public class System implements Closeable {
         }
     }
 
-    private String getDefault(final Parameter parameter) {
+    private static String getDefault(final Parameter parameter) {
         final Default annotation = parameter.getAnnotation(Default.class);
         return annotation == null ? null : annotation.value();
     }
@@ -585,6 +583,8 @@ public class System implements Closeable {
             this.clazz = clazz;
             this.constructor = Constructors.findConstructor(this.clazz);
             this.sortingName = (name != null) ? name : clazz.getSimpleName() + java.lang.System.nanoTime();
+
+            loadAnnotatedDefaults(this);
         }
 
         public String getReferenceId() {

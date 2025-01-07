@@ -20,6 +20,8 @@ home.street=823 Roosevelt Street
 home.city=River Falls
 home.state=WI
 home.zipcode=54022
+home.color?=blue
+home.country?=USA
 ----
 
 === Strict Validation for Accurate Configurations

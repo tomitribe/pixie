@@ -45,6 +45,7 @@ public class Instance {
         private final Class<T> type;
         private final String name;
         private boolean warnOnUnusedProperties = false;
+        private System.Declaration<T> declaration;
 
         public Builder(final Class<T> type) {
             this(type, "instance");
@@ -54,6 +55,7 @@ public class Instance {
             this.type = type;
             this.name = name;
             properties.put(this.name, "new://" + type.getName());
+            declaration = new System().new Declaration<>(name, type);
         }
 
         /**
@@ -116,6 +118,8 @@ public class Instance {
          * @param value The object instance we anticipate may be useful to the created instance.
          */
         public Builder<T> add(final Object value) {
+
+
             final String name = "unnamed$" + value.getClass().getSimpleName() + refs.incrementAndGet();
             objects.put(name, value);
             return this;
@@ -135,7 +139,17 @@ public class Instance {
          * @param value The object instance we anticipate may be useful to the created instance.
          */
         public Builder<T> add(final String name, final Object value) {
-            objects.put(name, value);
+
+            if (declaration.getOption(name) != null) {
+
+                properties.put(this.name + "." + name, value);
+
+            } else if (declaration.getReference(name) != null) {
+
+                comp(name, value);
+
+            }
+
             return this;
         }
 

@@ -90,12 +90,36 @@ public class InstanceBuilderTest {
         assertEquals("USA", address.getCountry());
 
     }
+
     @Test
     public void componentRefByType() throws Exception {
 
         final Person person = Instance.builder(Person.class)
                 .option("age", "37")
-                .add("anything", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .add(new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .build();
+
+        assertNotNull(person);
+        assertEquals("instance", person.getName());
+        assertEquals(37, person.getAge().intValue());
+
+        final Address address = person.getAddress();
+        assertNotNull(address);
+        assertEquals("820 Roosevelt Street", address.getStreet());
+        assertEquals("River Falls", address.getCity());
+        assertEquals(State.WI, address.getState());
+        assertEquals(54022, address.getZipcode());
+        assertEquals("USA", address.getCountry());
+
+    }
+
+    @Test
+    public void addOptionAndComponent() throws Exception {
+
+        final Person person = Instance.builder(Person.class)
+                .add("age", "37")
+                .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .add("direction", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
         assertNotNull(person);
