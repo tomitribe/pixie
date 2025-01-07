@@ -41,7 +41,24 @@ public class InstanceBuilderTest {
         assertEquals(State.WI, address.getState());
         assertEquals(54022, address.getZipcode());
         assertEquals("USA", address.getCountry());
+    }
 
+    @Test
+    public void optionStronglyTyped() throws Exception {
+
+        final Address address = Instance.builder(Address.class)
+                .option("street", "820 Roosevelt Street")
+                .option("city", "River Falls")
+                .option("state", State.WI)
+                .option("zipcode", 54022)
+                .build();
+
+        assertNotNull(address);
+        assertEquals("820 Roosevelt Street", address.getStreet());
+        assertEquals("River Falls", address.getCity());
+        assertEquals(State.WI, address.getState());
+        assertEquals(54022, address.getZipcode());
+        assertEquals("USA", address.getCountry());
     }
 
     /**
@@ -75,16 +92,16 @@ public class InstanceBuilderTest {
     @Test
     public void componentRefByType() throws Exception {
 
-        final Person jane = Instance.builder(Person.class)
+        final Person person = Instance.builder(Person.class)
                 .option("age", "37")
                 .add("anything", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
-        assertNotNull(jane);
-        assertEquals("instance", jane.getName());
-        assertEquals(37, jane.getAge().intValue());
+        assertNotNull(person);
+        assertEquals("instance", person.getName());
+        assertEquals(37, person.getAge().intValue());
 
-        final Address address = jane.getAddress();
+        final Address address = person.getAddress();
         assertNotNull(address);
         assertEquals("820 Roosevelt Street", address.getStreet());
         assertEquals("River Falls", address.getCity());
@@ -118,12 +135,23 @@ public class InstanceBuilderTest {
 
     @Test
     public void typeRef() throws Exception {
-        final Address address = new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA");
 
         final Person person = Instance.builder(Person.class)
                 .option("age", "37")
-                .add("address", address)
+                .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
+
+        assertNotNull(person);
+        assertEquals("instance", person.getName());
+        assertEquals(37, person.getAge().intValue());
+
+        final Address address = person.getAddress();
+        assertNotNull(address);
+        assertEquals("820 Roosevelt Street", address.getStreet());
+        assertEquals("River Falls", address.getCity());
+        assertEquals(State.WI, address.getState());
+        assertEquals(54022, address.getZipcode());
+        assertEquals("USA", address.getCountry());
     }
 
     public static class Person {
