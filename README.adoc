@@ -22,6 +22,14 @@ home.state=WI
 home.zipcode=54022
 ----
 
+=== Strict Validation for Accurate Configurations
+
+Pixie enforces a strict validation mechanism where every property in the configuration file must correspond to an @Option or @Component in the respective class. This design ensures:
+
+- Error Prevention: Configuration typos or outdated options are caught immediately during component initialization, preventing unexpected behavior at runtime.
+- Clarity and Transparency: Users can trust that only explicitly defined options affect the behavior of the application, avoiding confusion about whether a setting is valid or not.
+- Ease of Maintenance: If an option is removed or renamed, the system fails fast, guiding users to correct their configuration rather than silently ignoring invalid entries.
+
 == Components
 
 The sample configuration above references two classes that must be built:
