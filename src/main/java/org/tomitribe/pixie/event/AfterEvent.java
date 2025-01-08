@@ -11,12 +11,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tomitribe.pixie.observer.event;
+package org.tomitribe.pixie.event;
 
 
 import org.tomitribe.pixie.Event;
 
 @Event
-public interface BeforeEvent<T> {
+public interface AfterEvent<T> {
     T getEvent();
 }

@@ -11,17 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tomitribe.pixie.comp.event;
+package org.tomitribe.pixie.event;
 
 import org.tomitribe.pixie.Event;
 
 @Event
-public class ComponentAdded<T> {
+public class ComponentRemoved<T> {
 
     private final Class<T> type;
     private final T component;
 
-    public ComponentAdded(final Class<T> type, final T component) {
+    public ComponentRemoved(final Class<T> type, final T component) {
         this.type = type;
         this.component = component;
     }
@@ -36,7 +36,7 @@ public class ComponentAdded<T> {
 
     @Override
     public String toString() {
-        return "ComponentAdded{" +
+        return "ComponentRemoved{" +
             "type=" + type +
             ", component=" + component.getClass().getName() +
             '}';

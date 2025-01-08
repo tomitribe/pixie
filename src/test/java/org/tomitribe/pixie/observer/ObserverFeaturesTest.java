@@ -14,9 +14,9 @@
 package org.tomitribe.pixie.observer;
 
 import org.tomitribe.pixie.Observes;
-import org.tomitribe.pixie.observer.event.AfterEvent;
-import org.tomitribe.pixie.observer.event.BeforeEvent;
-import org.tomitribe.pixie.observer.event.ObserverFailed;
+import org.tomitribe.pixie.event.AfterEvent;
+import org.tomitribe.pixie.event.BeforeEvent;
+import org.tomitribe.pixie.event.ObserverFailed;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -11,17 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tomitribe.pixie.observer.event;
+package org.tomitribe.pixie.event;
 
 
 import org.tomitribe.pixie.Event;
 
 @Event
-public class ObserverRemoved {
+public class ObserverAdded {
 
     private final Object observer;
 
-    public ObserverRemoved(final Object observer) {
+    public ObserverAdded(final Object observer) {
         this.observer = observer;
     }
 
@@ -31,7 +31,7 @@ public class ObserverRemoved {
 
     @Override
     public String toString() {
-        return "ObserverRemoved{" +
+        return "ObserverAdded{" +
             "observer=" + observer.getClass().getName() +
             '}';
     }

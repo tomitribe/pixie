@@ -15,11 +15,11 @@ package org.tomitribe.pixie.observer;
 
 
 import org.tomitribe.pixie.Observes;
-import org.tomitribe.pixie.observer.event.AfterEvent;
-import org.tomitribe.pixie.observer.event.BeforeEvent;
-import org.tomitribe.pixie.observer.event.ObserverAdded;
-import org.tomitribe.pixie.observer.event.ObserverFailed;
-import org.tomitribe.pixie.observer.event.ObserverRemoved;
+import org.tomitribe.pixie.event.AfterEvent;
+import org.tomitribe.pixie.event.BeforeEvent;
+import org.tomitribe.pixie.event.ObserverAdded;
+import org.tomitribe.pixie.event.ObserverFailed;
+import org.tomitribe.pixie.event.ObserverRemoved;
 import org.tomitribe.util.Join;
 
 import java.lang.annotation.Annotation;

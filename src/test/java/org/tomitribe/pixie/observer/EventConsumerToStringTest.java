@@ -14,8 +14,8 @@
 package org.tomitribe.pixie.observer;
 
 import org.tomitribe.pixie.Observes;
-import org.tomitribe.pixie.observer.event.AfterEvent;
-import org.tomitribe.pixie.observer.event.BeforeEvent;
+import org.tomitribe.pixie.event.AfterEvent;
+import org.tomitribe.pixie.event.BeforeEvent;
 import org.junit.*;
 
 import java.util.Date;
@@ -62,10 +62,10 @@ public class EventConsumerToStringTest extends org.junit.Assert {
 
         final String testClass = this.getClass().getName();
         assertEquals("ConsumerReference{type=java.util.Date} InvocationList{invocations=4}\n" +
-                        "public void " + testClass + "$Yellow.observe(org.tomitribe.pixie.observer.event.BeforeEvent)\n" +
+                        "public void " + testClass + "$Yellow.observe(org.tomitribe.pixie.event.BeforeEvent)\n" +
                         "public void " + testClass + "$Red.observe(java.util.Date)\n" +
                         "public void " + testClass + "$Green.observe(java.util.Date)\n" +
-                        "public void " + testClass + "$Blue.observe(org.tomitribe.pixie.observer.event.AfterEvent)\n",
+                        "public void " + testClass + "$Blue.observe(org.tomitribe.pixie.event.AfterEvent)\n",
                 dateConsumer.toString());
 
     }

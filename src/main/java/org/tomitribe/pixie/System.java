@@ -24,7 +24,7 @@ import org.tomitribe.pixie.comp.MultipleComponentIssuesException;
 import org.tomitribe.pixie.comp.NamedComponentNotFoundException;
 import org.tomitribe.pixie.comp.References;
 import org.tomitribe.pixie.comp.UnknownPropertyException;
-import org.tomitribe.pixie.comp.event.ComponentAdded;
+import org.tomitribe.pixie.event.ComponentAdded;
 import org.tomitribe.pixie.event.PixieClose;
 import org.tomitribe.pixie.event.PixieLoad;
 import org.tomitribe.pixie.observer.ObserverManager;

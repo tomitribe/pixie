@@ -14,7 +14,7 @@
 package org.tomitribe.pixie.observer;
 
 import org.tomitribe.pixie.Observes;
-import org.tomitribe.pixie.observer.event.AfterEvent;
+import org.tomitribe.pixie.event.AfterEvent;
 import org.junit.Assert;
 import org.junit.Test;
 
