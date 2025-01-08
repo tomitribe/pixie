@@ -13,6 +13,10 @@
  */
 package org.tomitribe.pixie.comp;
 
+import org.tomitribe.pixie.Default;
+import org.tomitribe.pixie.Name;
+import org.tomitribe.pixie.Nullable;
+import org.tomitribe.pixie.Option;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;

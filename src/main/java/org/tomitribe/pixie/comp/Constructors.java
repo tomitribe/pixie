@@ -13,7 +13,10 @@
  */
 package org.tomitribe.pixie.comp;
 
-import org.tomitribe.pixie.observer.Event;
+import org.tomitribe.pixie.Component;
+import org.tomitribe.pixie.Event;
+import org.tomitribe.pixie.Name;
+import org.tomitribe.pixie.Option;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;

@@ -13,6 +13,7 @@
  */
 package org.tomitribe.pixie.observer;
 
+import org.tomitribe.pixie.Observes;
 import org.tomitribe.pixie.observer.event.AfterEvent;
 import org.tomitribe.pixie.observer.event.BeforeEvent;
 import org.tomitribe.pixie.observer.event.ObserverFailed;

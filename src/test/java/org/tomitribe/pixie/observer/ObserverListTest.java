@@ -13,6 +13,7 @@
  */
 package org.tomitribe.pixie.observer;
 
+import org.tomitribe.pixie.Observes;
 import org.tomitribe.pixie.observer.event.ObserverAdded;
 import org.tomitribe.pixie.observer.event.ObserverRemoved;
 import org.junit.Assert;

@@ -14,7 +14,7 @@
 package org.tomitribe.pixie.observer.event;
 
 
-import org.tomitribe.pixie.observer.Event;
+import org.tomitribe.pixie.Event;
 
 @Event
 public interface BeforeEvent<T> {

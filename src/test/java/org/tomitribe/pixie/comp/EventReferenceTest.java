@@ -14,8 +14,8 @@
 package org.tomitribe.pixie.comp;
 
 import org.tomitribe.pixie.System;
-import org.tomitribe.pixie.observer.Event;
-import org.tomitribe.pixie.observer.Observes;
+import org.tomitribe.pixie.Event;
+import org.tomitribe.pixie.Observes;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tomitribe.util.Join;

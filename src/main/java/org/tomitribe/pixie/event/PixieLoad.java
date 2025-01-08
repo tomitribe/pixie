@@ -13,7 +13,7 @@
  */
 package org.tomitribe.pixie.event;
 
-import org.tomitribe.pixie.observer.Event;
+import org.tomitribe.pixie.Event;
 
 import java.util.Properties;
 

@@ -13,7 +13,7 @@
  */
 package org.tomitribe.pixie.comp.event;
 
-import org.tomitribe.pixie.observer.Event;
+import org.tomitribe.pixie.Event;
 
 @Event
 public class ComponentRemoved<T> {

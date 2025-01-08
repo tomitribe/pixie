@@ -13,9 +13,6 @@
  */
 package org.tomitribe.pixie;
 
-import org.tomitribe.pixie.comp.Default;
-import org.tomitribe.pixie.comp.Option;
-
 public class SystemOptions {
 
     private final boolean debug;

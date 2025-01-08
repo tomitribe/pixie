@@ -11,16 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tomitribe.pixie.comp;
+package org.tomitribe.pixie;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * @version $Rev$ $Date$
+ */
 @Target(PARAMETER)
 @Retention(RUNTIME)
-public @interface Option {
-    String value();
+@Documented
+public @interface Observes {
 }

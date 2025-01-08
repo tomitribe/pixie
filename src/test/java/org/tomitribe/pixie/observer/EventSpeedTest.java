@@ -15,6 +15,7 @@ package org.tomitribe.pixie.observer;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.tomitribe.pixie.Observes;
 
 import java.util.concurrent.TimeUnit;
 

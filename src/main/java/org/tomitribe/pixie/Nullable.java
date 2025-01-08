@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tomitribe.pixie.comp;
+package org.tomitribe.pixie;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -21,5 +21,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target(PARAMETER)
 @Retention(RUNTIME)
-public @interface Name {
+public @interface Nullable {
 }

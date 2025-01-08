@@ -13,7 +13,7 @@
  */
 package org.tomitribe.pixie.comp;
 
-import org.tomitribe.pixie.observer.Event;
+import org.tomitribe.pixie.Event;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -14,12 +14,7 @@
 package org.tomitribe.pixie;
 
 import org.junit.Test;
-import org.tomitribe.pixie.comp.Component;
 import org.tomitribe.pixie.comp.ConstructionFailedException;
-import org.tomitribe.pixie.comp.Default;
-import org.tomitribe.pixie.comp.Name;
-import org.tomitribe.pixie.comp.Nullable;
-import org.tomitribe.pixie.comp.Option;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

@@ -13,31 +13,25 @@
  */
 package org.tomitribe.pixie;
 
-import org.tomitribe.pixie.comp.Component;
 import org.tomitribe.pixie.comp.ConstructionFailedException;
 import org.tomitribe.pixie.comp.Constructors;
-import org.tomitribe.pixie.comp.Default;
 import org.tomitribe.pixie.comp.EventReferences;
 import org.tomitribe.pixie.comp.InjectionPoint;
 import org.tomitribe.pixie.comp.InvalidOptionValueException;
 import org.tomitribe.pixie.comp.MissingComponentClassException;
 import org.tomitribe.pixie.comp.MissingRequiredOptionException;
 import org.tomitribe.pixie.comp.MultipleComponentIssuesException;
-import org.tomitribe.pixie.comp.Name;
 import org.tomitribe.pixie.comp.NamedComponentNotFoundException;
-import org.tomitribe.pixie.comp.Option;
 import org.tomitribe.pixie.comp.References;
 import org.tomitribe.pixie.comp.UnknownPropertyException;
 import org.tomitribe.pixie.comp.event.ComponentAdded;
 import org.tomitribe.pixie.event.PixieClose;
 import org.tomitribe.pixie.event.PixieLoad;
-import org.tomitribe.pixie.observer.Event;
 import org.tomitribe.pixie.observer.ObserverManager;
 import org.tomitribe.pixie.comp.ComponentException;
 import org.tomitribe.pixie.comp.ComponentReferenceSyntaxException;
 import org.tomitribe.pixie.comp.InvalidConstructorException;
 import org.tomitribe.pixie.comp.InvalidNullableWithDefaultException;
-import org.tomitribe.pixie.comp.Nullable;
 import org.tomitribe.util.Join;
 import org.tomitribe.util.editor.Converter;
 

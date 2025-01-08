@@ -11,16 +11,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tomitribe.pixie.comp;
+package org.tomitribe.pixie;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Target(PARAMETER)
+/**
+ * Exists for documentation purposes
+ * <p/>
+ * Event guidelines:
+ * - Fields should be final
+ * - Avoid logic
+ * - Implement toString()
+ *
+ * @version $Rev$ $Date$
+ */
+@Target({PARAMETER, TYPE})
 @Retention(RUNTIME)
-public @interface Component {
-    String value();
+public @interface Event {
 }

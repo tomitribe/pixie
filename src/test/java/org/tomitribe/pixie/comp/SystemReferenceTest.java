@@ -13,6 +13,7 @@
  */
 package org.tomitribe.pixie.comp;
 
+import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
