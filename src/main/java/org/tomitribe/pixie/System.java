@@ -29,8 +29,8 @@ import org.tomitribe.pixie.comp.Option;
 import org.tomitribe.pixie.comp.References;
 import org.tomitribe.pixie.comp.UnknownPropertyException;
 import org.tomitribe.pixie.comp.event.ComponentAdded;
-import org.tomitribe.pixie.event.TrixieClose;
-import org.tomitribe.pixie.event.TrixieLoad;
+import org.tomitribe.pixie.event.PixieClose;
+import org.tomitribe.pixie.event.PixieLoad;
 import org.tomitribe.pixie.observer.Event;
 import org.tomitribe.pixie.observer.ObserverManager;
 import org.tomitribe.pixie.comp.ComponentException;
@@ -119,7 +119,7 @@ public class System implements Closeable {
         build(declarations);
 
         // fire an event at the end so components can do something after
-        observerManager.fireEvent(new TrixieLoad(properties));
+        observerManager.fireEvent(new PixieLoad(properties));
     }
 
     private void build(final List<Declaration> declarations) {
@@ -248,7 +248,7 @@ public class System implements Closeable {
     @Override
     public void close() {
         // todo: should we do some sort of cleanup?
-        observerManager.fireEvent(new TrixieClose());
+        observerManager.fireEvent(new PixieClose());
     }
 
     public static class Instance<T> {

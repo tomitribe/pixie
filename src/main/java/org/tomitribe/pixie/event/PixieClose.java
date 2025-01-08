@@ -16,5 +16,5 @@ package org.tomitribe.pixie.event;
 import org.tomitribe.pixie.observer.Event;
 
 @Event
-public class TrixieClose {
+public class PixieClose {
 }

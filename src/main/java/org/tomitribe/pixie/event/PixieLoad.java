@@ -18,11 +18,11 @@ import org.tomitribe.pixie.observer.Event;
 import java.util.Properties;
 
 @Event
-public class TrixieLoad {
+public class PixieLoad {
 
     private final Properties properties;
 
-    public TrixieLoad(final Properties properties) {
+    public PixieLoad(final Properties properties) {
         // todo we should make a copy
         this.properties = properties;
     }
