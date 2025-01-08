@@ -16,7 +16,7 @@ package org.tomitribe.pixie.comp;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Default;
 import org.tomitribe.pixie.Name;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.util.PrintString;
 
 import java.lang.reflect.Constructor;
@@ -47,8 +47,8 @@ public class InvalidConstructorException extends ComponentException {
                 if (parameter.isAnnotationPresent(Component.class)) {
                     c.printf("@Component(\"%s\") ", parameter.getAnnotation(Component.class).value());
                 }
-                if (parameter.isAnnotationPresent(Option.class)) {
-                    c.printf("@Option(\"%s\") ", parameter.getAnnotation(Option.class).value());
+                if (parameter.isAnnotationPresent(Param.class)) {
+                    c.printf("@Param(\"%s\") ", parameter.getAnnotation(Param.class).value());
                 }
                 if (parameter.isAnnotationPresent(Name.class)) {
                     c.print("@Name ");
@@ -67,7 +67,7 @@ public class InvalidConstructorException extends ComponentException {
         }
         c.printf("  )");
 
-        return String.format("Constructor is missing %s parameter annotations%n  %s%n  %s%n  Add @Component, @Option or @Name",
+        return String.format("Constructor is missing %s parameter annotations%n  %s%n  %s%n  Add @Component, @Param or @Name",
                 missing,
                 constructor.getDeclaringClass().getName(),
                 c.toString()

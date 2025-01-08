@@ -16,7 +16,7 @@ package org.tomitribe.pixie.comp;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Event;
 import org.tomitribe.pixie.Name;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
@@ -32,7 +32,7 @@ public class Constructors {
 
     public static boolean isFullyAnnotated(final Parameter parameter) {
         if (parameter.isAnnotationPresent(Component.class)) return true;
-        if (parameter.isAnnotationPresent(Option.class)) return true;
+        if (parameter.isAnnotationPresent(Param.class)) return true;
         if (parameter.isAnnotationPresent(Name.class)) return true;
         if (parameter.isAnnotationPresent(Event.class)) return true;
         return false;

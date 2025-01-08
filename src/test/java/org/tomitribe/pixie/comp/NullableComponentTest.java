@@ -16,7 +16,7 @@ package org.tomitribe.pixie.comp;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Name;
 import org.tomitribe.pixie.Nullable;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
@@ -73,8 +73,8 @@ public class NullableComponentTest extends Assert {
 
     public static class BasicAuth {
 
-        public BasicAuth (@Option("username") @Nullable final String username,
-                          @Option("password") @Nullable final String password) {
+        public BasicAuth (@Param("username") @Nullable final String username,
+                          @Param("password") @Nullable final String password) {
 
         }
 

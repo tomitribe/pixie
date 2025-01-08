@@ -16,14 +16,14 @@ package org.tomitribe.pixie.comp;
 import org.tomitribe.pixie.Default;
 import org.tomitribe.pixie.Name;
 import org.tomitribe.pixie.Nullable;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Properties;
 
-public class NullableOptionTest extends Assert {
+public class NullableParamTest extends Assert {
 
     @Test
     public void nullableOption() {
@@ -69,7 +69,7 @@ public class NullableOptionTest extends Assert {
         private final String phone;
 
         public NullableOpt(@Name final String name,
-                           @Option("phone") @Nullable final String phone) {
+                           @Param("phone") @Nullable final String phone) {
 
             this.name = name;
             this.phone = phone;
@@ -87,7 +87,7 @@ public class NullableOptionTest extends Assert {
     public static class InvalidNullableOpt {
 
         public InvalidNullableOpt(@Name final String name,
-                                  @Option("phone") @Default("0011223344") @Nullable final String phone) {
+                                  @Param("phone") @Default("0011223344") @Nullable final String phone) {
 
         }
     }

@@ -16,7 +16,7 @@ package org.tomitribe.pixie.comp;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Default;
 import org.tomitribe.pixie.Name;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,14 +49,14 @@ public class InvalidConstructorExceptionTest extends Assert {
                 "  org.tomitribe.pixie.comp.InvalidConstructorExceptionTest$InvalidConstructorParameter\n" +
                 "  InvalidConstructorParameter(\n" +
                 "    @Name String\n" +
-                "    @Option(\"red\") String\n" +
+                "    @Param(\"red\") String\n" +
                 "    /* missing */ boolean\n" +
                 "    @Component(\"green\") URI\n" +
-                "    @Option(\"blue\") @Default(\"navy\") String\n" +
+                "    @Param(\"blue\") @Default(\"navy\") String\n" +
                 "    @Component(\"unit\") @Default(\"MINUTES\") TimeUnit\n" +
                 "    /* missing */ int\n" +
                 "  )\n" +
-                "  Add @Component, @Option or @Name", e.getMessage());
+                "  Add @Component, @Param or @Name", e.getMessage());
     }
 
     @Test
@@ -68,10 +68,10 @@ public class InvalidConstructorExceptionTest extends Assert {
 
         public InvalidConstructorParameter(
                 @Name String name,
-                @Option("red") String red,
+                @Param("red") String red,
                 boolean fun,
                 @Component("green") URI green,
-                @Option("blue") @Default("navy") String blue,
+                @Param("blue") @Default("navy") String blue,
                 @Component("unit") @Default("MINUTES") TimeUnit unit,
                 int notAnnotated) {
         }

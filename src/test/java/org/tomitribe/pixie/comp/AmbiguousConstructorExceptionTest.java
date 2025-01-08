@@ -14,7 +14,7 @@
 package org.tomitribe.pixie.comp;
 
 import org.tomitribe.pixie.Name;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,7 +69,7 @@ public class AmbiguousConstructorExceptionTest extends Assert {
         public AmbiguousDefinition(final @Name String name) {
         }
 
-        public AmbiguousDefinition(final @Name String name, final @Option("location") URI location) {
+        public AmbiguousDefinition(final @Name String name, final @Param("location") URI location) {
         }
     }
 }

@@ -13,25 +13,21 @@
  */
 package org.tomitribe.pixie.comp;
 
-import org.tomitribe.util.Join;
+public class MissingRequiredParamException extends ComponentException {
 
-import java.util.List;
+    private final String paramName;
 
-public class UnknownOptionsException extends ComponentException {
-
-    private List<String> options;
-
-    public UnknownOptionsException(final Class component, final List<String> options) {
+    public MissingRequiredParamException(final Class component, final String paramName) {
         super(component);
-        this.options = options;
+        this.paramName = paramName;
     }
 
     @Override
     public String getMessage() {
-        return String.format("Unknown options: %s%n  Component: %s", Join.join(", ", options), component.getName());
+        return String.format("Missing required param '%s' for component %s", paramName, component.getName());
     }
 
-    public List<String> getOptions() {
-        return options;
+    public String getParamName() {
+        return paramName;
     }
 }

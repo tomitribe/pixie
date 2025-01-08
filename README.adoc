@@ -26,7 +26,7 @@ home.country?=USA
 
 === Strict Validation for Accurate Configurations
 
-Pixie enforces a strict validation mechanism where every property in the configuration file must correspond to an `@Option` or `@Component` in the respective class. This design ensures:
+Pixie enforces a strict validation mechanism where every property in the configuration file must correspond to an `@Param` or `@Component` in the respective class. This design ensures:
 
 - Error Prevention: Configuration typos or outdated options are caught immediately during component initialization, preventing unexpected behavior at runtime.
 - Clarity and Transparency: Users can trust that only explicitly defined options affect the behavior of the application, avoiding confusion about whether a setting is valid or not.
@@ -52,11 +52,11 @@ public static class Address {
     private final int zipcode;
     private final String country;
 
-    public Address(@Option("street") final String street,
-                   @Option("city") final String city,
-                   @Option("state") final State state,
-                   @Option("zipcode") final int zipcode,
-                   @Option("country") @Default("USA") final String country) {
+    public Address(@Param("street") final String street,
+                   @Param("city") final String city,
+                   @Param("state") final State state,
+                   @Param("zipcode") final int zipcode,
+                   @Param("country") @Default("USA") final String country) {
         this.street = street;
         this.city = city;
         this.state = state;
@@ -90,13 +90,13 @@ Notice all the fields are final.  Pixie only supports constructor injection.  Th
 allows us to both create safe runtime objects whose fields are final, but it also
 gives us the ability to test our components without Pixie.
 
-=== @Option
+=== @Param
 
-Also note that Pixie supports injecting configuration properties via `@Option`.  The
+Also note that Pixie supports injecting configuration properties via `@Param`.  The
 value of the annotation points to the particular property you want.  It can be either
 a relative reference as shown above, or an absolute reference.
 
-Options are first assumed to be relative, so given `@Option("city")` on a component
+Options are first assumed to be relative, so given `@Param("city")` on a component
 whose name is `jon`, Pixie would imply `jon.` in the name and first look for this
 property:
 
@@ -109,7 +109,7 @@ If this does not succeed, Pixie will simply look in the global configuration for
 Of course, many components may reference the same property `city`.  Using `jon.city`
 would be the only way to target it specifically to the `Person` named `jon`
 
-==== @Option types
+==== @Param types
 
 Options may be `String`, `int`, `float` and other kinds of Java primitives.  They also
 can be any object type that matches either of these rules:
@@ -121,7 +121,7 @@ This allows Pixie to support Enums, classes like `URI.create(String)` and more.
 
 === @Default
 
-In the above `@Option("city")`, if `jon.city` and `city` are not found, Pixie will look
+In the above `@Param("city")`, if `jon.city` and `city` are not found, Pixie will look
 for an `@Default` annotation on the same parameter and use that for the default setting.
 
 This allows Pixie configuration files to be small and only contain what the user has chosen
@@ -132,7 +132,7 @@ to manage.
 `@Nullable` is a qualifier used to indicate an optional parameter is null.
 This way, you don't need to add a `@Default`  annotation with a constant you will then have to test in the code.
 
-For instance in `@Option("city") @Nullable final String city`, if city hasn't been specified, city will be `null`.
+For instance in `@Param("city") @Nullable final String city`, if city hasn't been specified, city will be `null`.
 
 IMPORTANT: It is invalid to use both `@Default` and `@Nullable`.
 
@@ -151,7 +151,7 @@ public static class Person {
     private final int age;
 
     public Person(@Name final String name,
-                  @Option("age") final int age) {
+                  @Param("age") final int age) {
         this.name = name;
         this.age = age;
     }
@@ -197,7 +197,7 @@ public static class Person {
     private final Address address;
 
     public Person(@Name final String name,
-                  @Option("age") final int age,
+                  @Param("age") final int age,
                   @Component("address") final Address address) {
         this.name = name;
         this.age = age;
@@ -237,7 +237,7 @@ fail and the system will not start up.
 
 Pixie intentionally does not expose any `getProperty` style of methods that allow
 configuration values to be looked up.  You must create a simple object with a constructor
-annotated with `@Option` and ask Pixie to create it.
+annotated with `@Param` and ask Pixie to create it.
 
 This limitation is intentional so that configuration properties can only be referenced
 via strongly typed annotations, which means we can statically know the name and type every

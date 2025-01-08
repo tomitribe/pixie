@@ -14,7 +14,7 @@
 package org.tomitribe.pixie.comp;
 
 import org.tomitribe.pixie.Default;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,8 +56,8 @@ public class DefaultsTest extends Assert {
         private final String color;
 
         public Defaults(
-                final @Option("location") @Default("red://location") URI location,
-                final @Option("color") @Default("green") String color
+                final @Param("location") @Default("red://location") URI location,
+                final @Param("color") @Default("green") String color
         ) {
             this.location = location;
             this.color = color;

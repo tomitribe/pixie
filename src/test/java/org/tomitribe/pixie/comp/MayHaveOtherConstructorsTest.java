@@ -13,7 +13,7 @@
  */
 package org.tomitribe.pixie.comp;
 
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class MayHaveOtherConstructorsTest extends Assert {
             throw new AssertionError("This constructor should not be called");
         }
 
-        public MayHaveOtherConstructors(final @Option("number") int number) {
+        public MayHaveOtherConstructors(final @Param("number") int number) {
             this.number = number;
         }
 

@@ -14,7 +14,7 @@
 package org.tomitribe.pixie.comp;
 
 import org.tomitribe.pixie.Name;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,9 +23,9 @@ import org.junit.Test;
 import java.net.URI;
 import java.util.Properties;
 
-public class MissingRequiredOptionExceptionTest extends Assert {
+public class MissingRequiredParamExceptionTest extends Assert {
 
-    private MissingRequiredOptionException e;
+    private MissingRequiredParamException e;
 
     @Before
     public void setup() {
@@ -37,21 +37,21 @@ public class MissingRequiredOptionExceptionTest extends Assert {
             assertNotNull(e.getCause());
             assertEquals(e.getComponent(), NoSuchOption.class);
 
-            assertTrue(e.getCause() instanceof MissingRequiredOptionException);
-            this.e = (MissingRequiredOptionException) e.getCause();
+            assertTrue(e.getCause() instanceof MissingRequiredParamException);
+            this.e = (MissingRequiredParamException) e.getCause();
         }
     }
 
     @Test
     public void testGetMessage() throws Exception {
-        assertEquals("Missing required option 'location' for component " +
+        assertEquals("Missing required param 'location' for component " +
                 "org.tomitribe.pixie.comp." +
-                "MissingRequiredOptionExceptionTest$NoSuchOption", e.getMessage());
+                "MissingRequiredParamExceptionTest$NoSuchOption", e.getMessage());
     }
 
     @Test
     public void testGetOptionName() throws Exception {
-        assertEquals("location", e.getOptionName());
+        assertEquals("location", e.getParamName());
     }
 
     @Test
@@ -71,7 +71,7 @@ public class MissingRequiredOptionExceptionTest extends Assert {
 
     public static class NoSuchOption {
 
-        public NoSuchOption(final @Name String name, final @Option("location") URI location) {
+        public NoSuchOption(final @Name String name, final @Param("location") URI location) {
         }
     }
 }

@@ -13,7 +13,7 @@
  */
 package org.tomitribe.pixie.comp;
 
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Test;
 import org.tomitribe.util.IO;
@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-public class CorrectOptionNamePreservedInExceptionsTest extends org.junit.Assert {
+public class CorrectParamNamePreservedInExceptionsTest extends org.junit.Assert {
 
 
     private final String config = "" +
@@ -39,18 +39,18 @@ public class CorrectOptionNamePreservedInExceptionsTest extends org.junit.Assert
             new System(properties);
             fail();
         } catch (ConstructionFailedException e) {
-            assertEquals(e.getCause().getClass(), InvalidOptionValueException.class);
-            final InvalidOptionValueException e1 = (InvalidOptionValueException) e.getCause();
-            assertEquals(e1.getOptionName(), "aTimeUnit");
-            assertEquals(e1.getOptionValue(), "love");
-            assertEquals(e1.getOptionType(), TimeUnit.class);
+            assertEquals(e.getCause().getClass(), InvalidParamValueException.class);
+            final InvalidParamValueException e1 = (InvalidParamValueException) e.getCause();
+            assertEquals(e1.getParamName(), "aTimeUnit");
+            assertEquals(e1.getParamValue(), "love");
+            assertEquals(e1.getParamType(), TimeUnit.class);
         }
     }
 
 
     public static class DataTypes {
 
-        public DataTypes(@Option("aTimeUnit") TimeUnit aTimeUnit) {
+        public DataTypes(@Param("aTimeUnit") TimeUnit aTimeUnit) {
         }
     }
 }

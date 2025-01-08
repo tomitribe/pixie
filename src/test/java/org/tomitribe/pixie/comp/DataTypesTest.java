@@ -13,7 +13,7 @@
  */
 package org.tomitribe.pixie.comp;
 
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
@@ -80,18 +80,18 @@ public class DataTypesTest extends Assert {
         private final URI aURI;
         private final File aFile;
 
-        public DataTypes(@Option("aString") String aString,
-                         @Option("abyte") byte abyte,
-                         @Option("ashort") short ashort,
-                         @Option("aint") int aint,
-                         @Option("along") long along,
-                         @Option("afloat") float afloat,
-                         @Option("adouble") double adouble,
-                         @Option("aboolean") boolean aboolean,
-                         @Option("achar") char achar,
-                         @Option("aTimeUnit") TimeUnit aTimeUnit,
-                         @Option("aURI") URI aURI,
-                         @Option("aFile") File aFile
+        public DataTypes(@Param("aString") String aString,
+                         @Param("abyte") byte abyte,
+                         @Param("ashort") short ashort,
+                         @Param("aint") int aint,
+                         @Param("along") long along,
+                         @Param("afloat") float afloat,
+                         @Param("adouble") double adouble,
+                         @Param("aboolean") boolean aboolean,
+                         @Param("achar") char achar,
+                         @Param("aTimeUnit") TimeUnit aTimeUnit,
+                         @Param("aURI") URI aURI,
+                         @Param("aFile") File aFile
         ) {
             this.aString = aString;
             this.abyte = abyte;

@@ -127,7 +127,7 @@ public class SystemTest extends Assert {
         private final Address address;
 
         public Person(@Name final String name,
-                      @Option("age") @Nullable final Integer age,
+                      @Param("age") @Nullable final Integer age,
                       @Component("address") final Address address) {
             this.name = name;
             this.age = age;
@@ -163,11 +163,11 @@ public class SystemTest extends Assert {
         private final int zipcode;
         private final String country;
 
-        public Address(@Option("street") @Nullable final String street,
-                       @Option("city") @Nullable final String city,
-                       @Option("state") @Nullable final State state,
-                       @Option("zipcode") @Nullable final int zipcode,
-                       @Option("country") @Default("USA") final String country) {
+        public Address(@Param("street") @Nullable final String street,
+                       @Param("city") @Nullable final String city,
+                       @Param("state") @Nullable final State state,
+                       @Param("zipcode") @Nullable final int zipcode,
+                       @Param("country") @Default("USA") final String country) {
             this.street = street;
             this.city = city;
             this.state = state;

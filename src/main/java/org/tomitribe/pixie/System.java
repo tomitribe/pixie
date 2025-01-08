@@ -17,9 +17,9 @@ import org.tomitribe.pixie.comp.ConstructionFailedException;
 import org.tomitribe.pixie.comp.Constructors;
 import org.tomitribe.pixie.comp.EventReferences;
 import org.tomitribe.pixie.comp.InjectionPoint;
-import org.tomitribe.pixie.comp.InvalidOptionValueException;
+import org.tomitribe.pixie.comp.InvalidParamValueException;
 import org.tomitribe.pixie.comp.MissingComponentClassException;
-import org.tomitribe.pixie.comp.MissingRequiredOptionException;
+import org.tomitribe.pixie.comp.MissingRequiredParamException;
 import org.tomitribe.pixie.comp.MultipleComponentIssuesException;
 import org.tomitribe.pixie.comp.NamedComponentNotFoundException;
 import org.tomitribe.pixie.comp.References;
@@ -66,7 +66,7 @@ public class System implements Closeable {
 
     private final boolean warnOnUnusedProperties;
 
-    private final Map<String, String> options = new ConcurrentHashMap<>();
+    private final Map<String, String> parameters = new ConcurrentHashMap<>();
 
     private final List<Instance> objects = new CopyOnWriteArrayList<>();
 
@@ -102,7 +102,7 @@ public class System implements Closeable {
      */
     public void load(final Properties properties) {
         // Convert the properties to Map<String,String>
-        options.putAll(toMap(properties));
+        parameters.putAll(toMap(properties));
 
         // Get the things that were explicitly declared in the configuration
         final List<Declaration> declarations = toMap(properties).entrySet().stream()
@@ -407,7 +407,7 @@ public class System implements Closeable {
 
             issues.addAll(applyExplicitOverrides(declaration));
 
-            issues.addAll(checkForMissingOptions(declaration));
+            issues.addAll(checkForMissingParameters(declaration));
 
 
             if (issues.size() == 0) return declaration;
@@ -427,23 +427,23 @@ public class System implements Closeable {
         );
     }
 
-    private Collection<? extends ComponentException> checkForMissingOptions(final Declaration declaration) {
-        final Map<String, Declaration.Opt> options = declaration.getOptions();
-        return options.values().stream()
-                .filter(opt -> opt.getValue() == null)
-                .filter(opt -> !opt.isNullable())
-                .map(opt -> new MissingRequiredOptionException(declaration.getClazz(), opt.getName()))
+    private Collection<? extends ComponentException> checkForMissingParameters(final Declaration declaration) {
+        final Map<String, Declaration.ParamValue> parameters = declaration.getParams();
+        return parameters.values().stream()
+                .filter(paramValue -> paramValue.getValue() == null)
+                .filter(paramValue -> !paramValue.isNullable())
+                .map(paramValue -> new MissingRequiredParamException(declaration.getClazz(), paramValue.getName()))
                 .collect(Collectors.toList())
                 ;
     }
 
     // this is invalid to have both @Nullable and @Default
     private Collection<? extends ComponentException> checkForNullableWithDefault(final Declaration declaration) {
-        final Map<String, Declaration.Opt> options = declaration.getOptions();
-        return options.values().stream()
-                .filter(opt -> opt.getValue() != null)
-                .filter(Declaration.Opt::isNullable)
-                .map(opt -> new InvalidNullableWithDefaultException(declaration.getClazz(), opt.getName(), opt.getValue()))
+        final Map<String, Declaration.ParamValue> params = declaration.getParams();
+        return params.values().stream()
+                .filter(paramValue -> paramValue.getValue() != null)
+                .filter(Declaration.ParamValue::isNullable)
+                .map(paramValue -> new InvalidNullableWithDefaultException(declaration.getClazz(), paramValue.getName(), paramValue.getValue()))
                 .collect(Collectors.toList())
                 ;
     }
@@ -472,9 +472,9 @@ public class System implements Closeable {
 
     private static void override(final Declaration declaration, final Map<String, String> overrides) {
         for (final Map.Entry<String, String> property : overrides.entrySet()) {
-            if (declaration.getOption(property.getKey()) != null) {
+            if (declaration.getParam(property.getKey()) != null) {
 
-                declaration.getOption(property.getKey()).setValue(property.getValue());
+                declaration.getParam(property.getKey()).setValue(property.getValue());
 
             } else if (declaration.getReference(property.getKey()) != null && property.getValue().startsWith("@")) {
 
@@ -486,7 +486,7 @@ public class System implements Closeable {
     private List<ComponentException> checkForUnknownProperties(final Declaration declaration, final Map<String, String> overrides) {
         final Predicate<Map.Entry<String, String>> isSupported = entry -> {
             if (declaration.getReference(entry.getKey()) != null) return true;
-            if (declaration.getOption(entry.getKey()) != null) return true;
+            if (declaration.getParam(entry.getKey()) != null) return true;
             return false;
         };
 
@@ -518,7 +518,7 @@ public class System implements Closeable {
     private Map<String, String> selectOverrides(final String prefix) {
         final Map<String, String> overrides = new HashMap<>();
 
-        this.options.entrySet().stream()
+        this.parameters.entrySet().stream()
                 .filter(entry -> entry.getKey().toLowerCase().startsWith(prefix))
                 .forEach(entry -> {
                     final String key = entry.getKey().substring(prefix.length());
@@ -529,7 +529,7 @@ public class System implements Closeable {
 
     private void applyImplicitOverrides(final Declaration declaration) {
         // Error handling is above, so this logic is simple
-        override(declaration, this.options);
+        override(declaration, this.parameters);
     }
 
     private Class<?> loadComponentClass(final Map.Entry<String, String> entry) {
@@ -549,10 +549,10 @@ public class System implements Closeable {
 
                 declaration.addReference(referenceName, referenceType, defaultValue, isNullable);
 
-            } else if (parameter.isAnnotationPresent(Option.class)) {
+            } else if (parameter.isAnnotationPresent(Param.class)) {
 
-                final String optionName = parameter.getAnnotation(Option.class).value();
-                declaration.addOption(optionName, defaultValue, isNullable);
+                final String optionName = parameter.getAnnotation(Param.class).value();
+                declaration.addParam(optionName, defaultValue, isNullable);
 
             }
         }
@@ -568,7 +568,7 @@ public class System implements Closeable {
         private final String sortingName;
         private final Class<T> clazz;
         private final Constructor<T> constructor;
-        private final Map<String, Opt> options = new HashMap<>();
+        private final Map<String, ParamValue> params = new HashMap<>();
         private final List<InjectionPoint> injectionPoints = new ArrayList<>();
         private T instance;
 
@@ -609,16 +609,16 @@ public class System implements Closeable {
             return clazz.getName();
         }
 
-        public Map<String, Opt> getOptions() {
-            return options;
+        public Map<String, ParamValue> getParams() {
+            return params;
         }
 
-        public Opt getOption(String name) {
-            return options.get(name.toLowerCase());
+        public ParamValue getParam(String name) {
+            return params.get(name.toLowerCase());
         }
 
-        public void addOption(final String optionName, final String defaultValue, final boolean isNullable) {
-            this.options.put(optionName.toLowerCase(), new Opt(optionName, defaultValue, isNullable));
+        public void addParam(final String paramName, final String defaultValue, final boolean isNullable) {
+            this.params.put(paramName.toLowerCase(), new ParamValue(paramName, defaultValue, isNullable));
         }
 
 
@@ -633,19 +633,19 @@ public class System implements Closeable {
 
         private InjectionPoint buildInjectionPoint(final Constructor constructor, final Parameter parameter) {
             if (parameter.isAnnotationPresent(Component.class)) return new Declaration.ComponentInjection(parameter);
-            if (parameter.isAnnotationPresent(Option.class)) return new Declaration.OptionInjection(parameter);
+            if (parameter.isAnnotationPresent(Param.class)) return new ParamInjection(parameter);
             if (parameter.isAnnotationPresent(Name.class)) return new Declaration.NameInjection();
             if (parameter.isAnnotationPresent(Event.class)) return new Declaration.EventInjection(parameter);
 
             throw new InvalidConstructorException(constructor.getDeclaringClass(), constructor);
         }
 
-        public class Opt {
+        public class ParamValue {
             private final String name;
             private final boolean isNullable;
             private String value;
 
-            public Opt(final String name, final String value, final boolean isNullable) {
+            public ParamValue(final String name, final String value, final boolean isNullable) {
                 this.name = name;
                 this.value = value;
                 this.isNullable = isNullable;
@@ -775,38 +775,38 @@ public class System implements Closeable {
             }
         }
 
-        public class OptionInjection implements InjectionPoint {
+        public class ParamInjection implements InjectionPoint {
 
             private final Parameter parameter;
-            private final Option option;
+            private final Param param;
             private final Default defaultValue;
             private final boolean isNullable;
 
-            public OptionInjection(final Parameter parameter) {
+            public ParamInjection(final Parameter parameter) {
                 this.parameter = parameter;
-                this.option = parameter.getAnnotation(Option.class);
+                this.param = parameter.getAnnotation(Param.class);
                 this.defaultValue = parameter.getAnnotation(Default.class);
                 this.isNullable = parameter.isAnnotationPresent(Nullable.class);
             }
 
             @Override
             public Object resolveValue() {
-                final String optionName = option.value();
-                final Opt option = Declaration.this.getOption(optionName);
+                final String parameterName = param.value();
+                final ParamValue param = Declaration.this.getParam(parameterName);
 
-                if (option == null || option.getValue() == null) {
+                if (param == null || param.getValue() == null) {
                     if (isNullable) {
                         return null;
 
                     } else {
-                        throw new MissingRequiredOptionException(Declaration.this.clazz, optionName);
+                        throw new MissingRequiredParamException(Declaration.this.clazz, parameterName);
                     }
                 }
 
                 try {
-                    return Converter.convert(option.getValue(), parameter.getType(), optionName);
+                    return Converter.convert(param.getValue(), parameter.getType(), parameterName);
                 } catch (Exception e) {
-                    throw new InvalidOptionValueException(Declaration.this.clazz, e, optionName, option.getValue(), parameter.getType());
+                    throw new InvalidParamValueException(Declaration.this.clazz, e, parameterName, param.getValue(), parameter.getType());
                 }
             }
         }
@@ -864,7 +864,7 @@ public class System implements Closeable {
 
         private T build() {
             try {
-                // Select the constructor whose parameters are annotated with @Option, @Component or @Name
+                // Select the constructor whose parameters are annotated with @Param, @Component or @Name
                 final Constructor<T> constructor = Constructors.findConstructor(clazz);
 
                 // Convert the parameters to InjectionPoint instances

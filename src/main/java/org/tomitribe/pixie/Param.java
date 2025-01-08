@@ -21,6 +21,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target(PARAMETER)
 @Retention(RUNTIME)
-public @interface Option {
+public @interface Param {
     String value();
 }

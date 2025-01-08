@@ -72,7 +72,7 @@ public class Instance {
         /**
          * Use of comp(*) and option(*) create the expectation the
          * class definition has explicitly declared a need for these
-         * things via the @Component and @Option annotations.
+         * things via the @Component and @Param annotations.
          *
          * When no such declaration exists an exception will be thrown
          * on build() unless warnOnUnusedProperties() has been called.
@@ -160,7 +160,7 @@ public class Instance {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
-            if (declaration.getOption(name) != null) {
+            if (declaration.getParam(name) != null) {
 
                 properties.put(this.name + "." + name, value);
 
@@ -174,10 +174,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -192,10 +192,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -210,10 +210,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -228,10 +228,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -246,10 +246,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -264,10 +264,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -282,10 +282,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -300,10 +300,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -318,10 +318,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance
@@ -336,10 +336,10 @@ public class Instance {
         }
 
         /**
-         * Sets the value of an explicitly declared @Option reference
+         * Sets the value of an explicitly declared @Param reference
          * declared in the class of the instance we are creating.
          *
-         * If the class does not declare a @Option reference with the
+         * If the class does not declare a @Param reference with the
          * name specified an exception will be thrown unless `warnOnUnusedProperties`
          *
          * Use add(*) to offer objects that may be useful to the created instance

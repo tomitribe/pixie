@@ -16,7 +16,7 @@ package org.tomitribe.pixie.comp;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Default;
 import org.tomitribe.pixie.Name;
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Before;
@@ -61,8 +61,8 @@ public class MultipleComponentIssuesExceptionTest extends Assert {
                 " - UnknownPropertyException          : Unknown property `color = orange`\n" +
                 " - UnknownPropertyException          : Unknown property `shape = @red`\n" +
                 " - ComponentReferenceSyntaxException : Invalid property `person = joe` - Component references must start with @\n" +
-                " - MissingRequiredOptionException    : Missing required option 'red' for component " + component + "\n" +
-                " - MissingRequiredOptionException    : Missing required option 'crimson' for component " + component + "\n",
+                " - MissingRequiredParamException     : Missing required param 'red' for component " + component + "\n" +
+                " - MissingRequiredParamException     : Missing required param 'crimson' for component " + component + "\n",
                 e.getMessage());
     }
 
@@ -84,11 +84,11 @@ public class MultipleComponentIssuesExceptionTest extends Assert {
         assertTrue(issues.get(2) instanceof ComponentReferenceSyntaxException);
         assertEquals("person", ((ComponentReferenceSyntaxException) issues.get(2)).getKey());
 
-        assertTrue(issues.get(3) instanceof MissingRequiredOptionException);
-        assertEquals("red", ((MissingRequiredOptionException) issues.get(3)).getOptionName());
+        assertTrue(issues.get(3) instanceof MissingRequiredParamException);
+        assertEquals("red", ((MissingRequiredParamException) issues.get(3)).getParamName());
 
-        assertTrue(issues.get(4) instanceof MissingRequiredOptionException);
-        assertEquals("crimson", ((MissingRequiredOptionException) issues.get(4)).getOptionName());
+        assertTrue(issues.get(4) instanceof MissingRequiredParamException);
+        assertEquals("crimson", ((MissingRequiredParamException) issues.get(4)).getParamName());
     }
 
     public static class MultipleComponentIssues {
@@ -96,9 +96,9 @@ public class MultipleComponentIssuesExceptionTest extends Assert {
         public MultipleComponentIssues(
                 final @Name String name,
                 final @Component("person") Person badSyntax,
-                final @Option("red") String missingOption1,    // MissingRequiredOptionException
-                final @Option("crimson") String missingOption2, // MissingRequiredOptionException
-                final @Option("green") @Default("thing") String green
+                final @Param("red") String missingOption1,    // MissingRequiredOptionException
+                final @Param("crimson") String missingOption2, // MissingRequiredOptionException
+                final @Param("green") @Default("thing") String green
         ) {
         }
     }

@@ -13,7 +13,7 @@
  */
 package org.tomitribe.pixie.comp;
 
-import org.tomitribe.pixie.Option;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
@@ -73,10 +73,10 @@ public class OptionsAreCaseInsensitiveTest extends Assert {
     public static class MyClass {
 
         public MyClass(
-                @Option("lowercase") final String lowercase,
-                @Option("UPPERCASE") final String uppercase,
-                @Option("camelCase") final String camelcase,
-                @Option("rAndOmCasE") final String randomcase
+                @Param("lowercase") final String lowercase,
+                @Param("UPPERCASE") final String uppercase,
+                @Param("camelCase") final String camelcase,
+                @Param("rAndOmCasE") final String randomcase
         ) {
         }
     }
