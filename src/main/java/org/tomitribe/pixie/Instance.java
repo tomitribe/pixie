@@ -15,6 +15,7 @@ package org.tomitribe.pixie;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,10 +29,17 @@ public class Instance {
     private Instance() {
     }
 
+    /**
+     * Build an instance of the specified class
+     */
     public static <T> Builder<T> builder(final Class<T> type) {
         return new Builder<T>(type);
     }
 
+    /**
+     * Build an instance of the specified class with the specified name.
+     * The name will only be relevant if the class uses the @Name
+     */
     public static <T> Builder<T> builder(final Class<T> type, final String name) {
         return new Builder<T>(type, name);
     }
@@ -52,6 +60,9 @@ public class Instance {
         }
 
         public Builder(final Class<T> type, final String name) {
+            Objects.requireNonNull(type, "type must not be null");
+            Objects.requireNonNull(name, "name must not be null");
+
             this.type = type;
             this.name = name;
             properties.put(this.name, "new://" + type.getName());
@@ -82,6 +93,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> comp(final String name, final Object value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             /*
              * Internally, Pixie wants the value to be a name and to
              * subsequently lookup the specified object by name.  To
@@ -98,6 +112,9 @@ public class Instance {
         }
 
         public Builder<T> comp(final String name, final String refName) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(refName, "refName must not be null");
+
             properties.put(this.name + "." + name, "@" + refName);
             return this;
         }
@@ -118,10 +135,11 @@ public class Instance {
          * @param value The object instance we anticipate may be useful to the created instance.
          */
         public Builder<T> add(final Object value) {
-
+            Objects.requireNonNull(value, "value must not be null");
 
             final String name = "unnamed$" + value.getClass().getSimpleName() + refs.incrementAndGet();
             objects.put(name, value);
+
             return this;
         }
 
@@ -139,6 +157,8 @@ public class Instance {
          * @param value The object instance we anticipate may be useful to the created instance.
          */
         public Builder<T> add(final String name, final Object value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
 
             if (declaration.getOption(name) != null) {
 
@@ -164,6 +184,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final String value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -179,6 +202,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final Integer value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -194,6 +220,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final Boolean value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -209,6 +238,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final Double value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -224,6 +256,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final Float value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -239,6 +274,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final Long value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -254,6 +292,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final Short value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -269,6 +310,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final Byte value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -284,6 +328,9 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public Builder<T> option(final String name, final Character value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             properties.put(this.name + "." + name, value);
             return this;
         }
@@ -299,7 +346,10 @@ public class Instance {
          * but are not known as explicit requirements.
          */
         public <E extends Enum<E>> Builder<T> option(final String name, final E value) {
-            properties.put(this.name + "." + name, value);
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
+            properties.put(this.name + "." + name, value.name());
             return this;
         }
 
@@ -312,10 +362,29 @@ public class Instance {
          */
         public T build() {
             final System system = new System(warnOnUnusedProperties);
+
+            /*
+             * Add the objects for component references
+             */
             for (final Map.Entry<String, Object> entry : objects.entrySet()) {
                 system.add(entry.getValue(), entry.getKey());
             }
-            system.load(properties);
+
+            /*
+             * Swap the context classloader to whatever ClassLoader
+             * loaded the target class
+             */
+            {
+                final Thread thread = Thread.currentThread();
+                final ClassLoader old = thread.getContextClassLoader();
+                thread.setContextClassLoader(type.getClassLoader());
+                try {
+                    system.load(properties);
+                } finally {
+                    thread.setContextClassLoader(old);
+                }
+            }
+
             return system.get(type);
         }
     }
