@@ -134,7 +134,7 @@ public class Instance {
          *
          * @param value The object instance we anticipate may be useful to the created instance.
          */
-        public Builder<T> add(final Object value) {
+        public Builder<T> optional(final Object value) {
             Objects.requireNonNull(value, "value must not be null");
 
             final String name = "unnamed$" + value.getClass().getSimpleName() + refs.incrementAndGet();
@@ -156,7 +156,7 @@ public class Instance {
          * @param name Sets an explicit name which enables several instance of the same type to exist and be referenced
          * @param value The object instance we anticipate may be useful to the created instance.
          */
-        public Builder<T> add(final String name, final Object value) {
+        public Builder<T> optional(final String name, final Object value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -183,7 +183,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final String value) {
+        public Builder<T> param(final String name, final String value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -201,7 +201,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final Integer value) {
+        public Builder<T> param(final String name, final Integer value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -219,7 +219,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final Boolean value) {
+        public Builder<T> param(final String name, final Boolean value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -237,7 +237,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final Double value) {
+        public Builder<T> param(final String name, final Double value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -255,7 +255,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final Float value) {
+        public Builder<T> param(final String name, final Float value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -273,7 +273,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final Long value) {
+        public Builder<T> param(final String name, final Long value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -291,7 +291,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final Short value) {
+        public Builder<T> param(final String name, final Short value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -309,7 +309,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final Byte value) {
+        public Builder<T> param(final String name, final Byte value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -327,7 +327,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public Builder<T> option(final String name, final Character value) {
+        public Builder<T> param(final String name, final Character value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 
@@ -345,7 +345,7 @@ public class Instance {
          * Use add(*) to offer objects that may be useful to the created instance
          * but are not known as explicit requirements.
          */
-        public <E extends Enum<E>> Builder<T> option(final String name, final E value) {
+        public <E extends Enum<E>> Builder<T> param(final String name, final E value) {
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
 

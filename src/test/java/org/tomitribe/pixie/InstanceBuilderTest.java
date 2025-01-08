@@ -25,10 +25,10 @@ public class InstanceBuilderTest {
     public void options() throws Exception {
 
         final Address address = Instance.builder(Address.class)
-                .option("street", "820 Roosevelt Street")
-                .option("city", "River Falls")
-                .option("state", "WI")
-                .option("zipcode", "54022")
+                .param("street", "820 Roosevelt Street")
+                .param("city", "River Falls")
+                .param("state", "WI")
+                .param("zipcode", "54022")
                 .build();
 
         assertNotNull(address);
@@ -43,10 +43,10 @@ public class InstanceBuilderTest {
     public void optionStronglyTyped() throws Exception {
 
         final Address address = Instance.builder(Address.class)
-                .option("street", "820 Roosevelt Street")
-                .option("city", "River Falls")
-                .option("state", State.WI)
-                .option("zipcode", 54022)
+                .param("street", "820 Roosevelt Street")
+                .param("city", "River Falls")
+                .param("state", State.WI)
+                .param("zipcode", 54022)
                 .build();
 
         assertNotNull(address);
@@ -68,7 +68,7 @@ public class InstanceBuilderTest {
     public void component() throws Exception {
 
         final Person jane = Instance.builder(Person.class)
-                .option("age", "37")
+                .param("age", "37")
                 .comp("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
@@ -90,8 +90,8 @@ public class InstanceBuilderTest {
     public void componentRefByType() throws Exception {
 
         final Person person = Instance.builder(Person.class)
-                .option("age", "37")
-                .add(new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .param("age", "37")
+                .optional(new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
         assertNotNull(person);
@@ -112,9 +112,9 @@ public class InstanceBuilderTest {
     public void addOptionAndComponent() throws Exception {
 
         final Person person = Instance.builder(Person.class)
-                .add("age", "37")
-                .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
-                .add("direction", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .optional("age", "37")
+                .optional("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .optional("direction", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
         assertNotNull(person);
@@ -139,7 +139,7 @@ public class InstanceBuilderTest {
     public void name() throws Exception {
 
         final Person jane = Instance.builder(Person.class, "jane")
-                .option("age", "37")
+                .param("age", "37")
                 .comp("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
@@ -165,8 +165,8 @@ public class InstanceBuilderTest {
     public void typeRef() throws Exception {
 
         final Person person = Instance.builder(Person.class)
-                .option("age", "37")
-                .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .param("age", "37")
+                .optional("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
         assertNotNull(person);
@@ -190,8 +190,8 @@ public class InstanceBuilderTest {
     public void unamedTypeRef() throws Exception {
 
         final Person person = Instance.builder(Person.class)
-                .option("age", "37")
-                .add(new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .param("age", "37")
+                .optional(new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
         assertNotNull(person);
@@ -211,9 +211,9 @@ public class InstanceBuilderTest {
     public void failOnUnusedProperties() throws Exception {
 
         Instance.builder(Person.class)
-                .option("age", "37")
-                .option("height", "70")
-                .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .param("age", "37")
+                .param("height", "70")
+                .optional("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
     }
@@ -223,9 +223,9 @@ public class InstanceBuilderTest {
 
         final Person person = Instance.builder(Person.class)
                 .warnOnUnusedProperties()
-                .option("age", "37")
-                .option("height", "70")
-                .add("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .param("age", "37")
+                .param("height", "70")
+                .optional("address", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
                 .build();
 
         assertNotNull(person);
