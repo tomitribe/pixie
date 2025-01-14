@@ -13,6 +13,8 @@
  */
 package org.tomitribe.pixie;
 
+import org.tomitribe.pixie.comp.MissingComponentDeclarationException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -49,7 +51,8 @@ public class Instance {
         private final AtomicInteger refs = new AtomicInteger(100);
 
         private final Properties properties = new Properties();
-        private final HashMap<String, Object> objects = new HashMap<>();
+        private final HashMap<String, Object> optionalObjects = new HashMap<>();
+        private final HashMap<String, Object> requiredObjects = new HashMap<>();
         private final Class<T> type;
         private final String name;
         private boolean warnOnUnusedProperties = false;
@@ -107,7 +110,38 @@ public class Instance {
              */
             final String refName = "unnamed$" + name + refs.incrementAndGet();
             properties.put(this.name + "." + name, "@" + refName);
-            objects.put(refName, value);
+            requiredObjects.put(refName, value);
+            return this;
+        }
+
+        /**
+         * Sets the value of a declared @Component reference using type
+         * alone to resolve the injection.  Useful in scenarios were we
+         * do not know or care what name the class has used to refer to the
+         * type, we simply know it needs or must accept an object of the
+         * provided type.
+         *
+         * If the class does not declare a @Component reference with the
+         * appropriate type an exception will be thrown unless `warnOnUnusedProperties`
+         *
+         * Use add(*) to offer objects that may be useful to the created instance
+         * but are not known as explicit requirements.
+         */
+        public Builder<T> comp(final Object value) {
+            Objects.requireNonNull(value, "value must not be null");
+
+            /*
+             * Internally, Pixie wants the value to be a name and to
+             * subsequently lookup the specified object by name.  To
+             * work around this, we give the specified object a unique
+             * name, add the object to Pixie System with that name, and
+             * then set a reference to that name.
+             *
+             * This could be optimized.
+             */
+            final String refName = "unnamed$" + name + refs.incrementAndGet();
+            properties.put(this.name + "." + name, "@" + refName);
+            requiredObjects.put(refName, value);
             return this;
         }
 
@@ -138,7 +172,7 @@ public class Instance {
             Objects.requireNonNull(value, "value must not be null");
 
             final String name = "unnamed$" + value.getClass().getSimpleName() + refs.incrementAndGet();
-            objects.put(name, value);
+            optionalObjects.put(name, value);
 
             return this;
         }
@@ -364,9 +398,30 @@ public class Instance {
             final System system = new System(warnOnUnusedProperties);
 
             /*
-             * Add the objects for component references
+             * Add the optional objects for component references
              */
-            for (final Map.Entry<String, Object> entry : objects.entrySet()) {
+            for (final Map.Entry<String, Object> entry : optionalObjects.entrySet()) {
+                system.add(entry.getValue(), entry.getKey());
+            }
+
+            /*
+             * Add the optional objects for component references
+             */
+            for (final Map.Entry<String, Object> entry : requiredObjects.entrySet()) {
+
+                if (!warnOnUnusedProperties) {
+                    boolean used = false;
+                    for (final System.Declaration<T>.Reference reference : declaration.getReferences()) {
+                        if (reference.getType().isAssignableFrom(value.getClass())) {
+                            used=true;
+                        }
+                    }
+                    if (!used) {
+                        throw new MissingComponentDeclarationException(type, value.getClass());
+                    }
+                }
+
+
                 system.add(entry.getValue(), entry.getKey());
             }
 
