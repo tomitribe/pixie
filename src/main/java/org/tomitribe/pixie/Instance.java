@@ -411,6 +411,7 @@ public class Instance {
 
                 if (!warnOnUnusedProperties) {
                     boolean used = false;
+                    final Object value = entry.getValue();
                     for (final System.Declaration<T>.Reference reference : declaration.getReferences()) {
                         if (reference.getType().isAssignableFrom(value.getClass())) {
                             used=true;
