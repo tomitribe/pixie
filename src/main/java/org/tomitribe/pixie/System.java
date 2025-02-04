@@ -19,6 +19,7 @@ import org.tomitribe.pixie.comp.EventReferences;
 import org.tomitribe.pixie.comp.InjectionPoint;
 import org.tomitribe.pixie.comp.InvalidParamValueException;
 import org.tomitribe.pixie.comp.MissingComponentClassException;
+import org.tomitribe.pixie.comp.MissingComponentDeclarationException;
 import org.tomitribe.pixie.comp.MissingRequiredParamException;
 import org.tomitribe.pixie.comp.MultipleComponentIssuesException;
 import org.tomitribe.pixie.comp.NamedComponentNotFoundException;
@@ -46,11 +47,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -941,6 +944,434 @@ public class System implements Closeable {
         } catch (Throwable e) {
             throw new ConstructionFailedException(type, e);
         }
+    }
+
+    public static SystemBuilder builder() {
+        return new SystemBuilder();
+    }
+
+    public static class SystemBuilder {
+
+        private final AtomicInteger refs = new AtomicInteger(100);
+
+        private final Properties properties = new Properties();
+
+        private final HashMap<String, Object> objects = new HashMap<>();
+
+        private boolean warnOnUnusedProperties = false;
+
+        /**
+         * Build an instance of the specified class
+         */
+        public DefinitionBuilder definition(final Class<?> type) {
+            return new DefinitionBuilder(type);
+        }
+
+        /**
+         * Build an instance of the specified class with the specified name.
+         * The name will only be relevant if the class uses the @Name
+         */
+        public DefinitionBuilder definition(final Class<?> type, final String name) {
+            return new DefinitionBuilder(type, name);
+        }
+
+        /**
+         * Use of comp(*) and option(*) create the expectation the
+         * class definition has explicitly declared a need for these
+         * things via the @Component and @Param annotations.
+         *
+         * When no such declaration exists an exception will be thrown
+         * on build() unless warnOnUnusedProperties() has been called.
+         */
+        public SystemBuilder warnOnUnusedProperties() {
+            warnOnUnusedProperties = true;
+            return this;
+        }
+
+
+        /**
+         * Adds an object to be possibly consumed by the created instances.
+         *
+         * As no name is specified for this object it may only be referenced by type
+         * and adding more objects of the same type will create ambiguity in resolution.
+         *
+         * @param value The object instance we anticipate may be useful to the created instances.
+         */
+        public SystemBuilder add(final Object value) {
+            Objects.requireNonNull(value, "value must not be null");
+
+            final String name = "unnamed$" + value.getClass().getSimpleName() + refs.incrementAndGet();
+            objects.put(name, value);
+
+            return this;
+        }
+
+
+        public class DefinitionBuilder {
+
+            private final HashMap<String, Object> required = new HashMap<>();
+            private final Class<?> type;
+            private final String name;
+            private final System.Declaration<?> declaration;
+
+            public DefinitionBuilder(final Class<?> type) {
+                this(type, "instance" + refs.incrementAndGet());
+            }
+
+            public DefinitionBuilder(final Class<?> type, final String name) {
+                Objects.requireNonNull(type, "type must not be null");
+                Objects.requireNonNull(name, "name must not be null");
+
+                this.type = type;
+                this.name = name;
+                properties.put(this.name, "new://" + type.getName());
+                declaration = new System().new Declaration<>(name, type);
+            }
+
+            /**
+             * Build an instance of the specified class
+             */
+            public DefinitionBuilder definition(final Class<?> type) {
+                validate();
+                return SystemBuilder.this.definition(type);
+            }
+
+            /**
+             * Build an instance of the specified class with the specified name.
+             * The name will only be relevant if the class uses the @Name
+             */
+            public DefinitionBuilder definition(final Class<?> type, final String name) {
+                validate();
+                return SystemBuilder.this.definition(type, name);
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Component reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Component reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder comp(final String name, final Object value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                /*
+                 * Internally, Pixie wants the value to be a name and to
+                 * subsequently lookup the specified object by name.  To
+                 * work around this, we give the specified object a unique
+                 * name, add the object to Pixie System with that name, and
+                 * then set a reference to that name.
+                 *
+                 * This could be optimized.
+                 */
+                final String refName = "unnamed$" + name + refs.incrementAndGet();
+                properties.put(this.name + "." + name, "@" + refName);
+                required.put(refName, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of a declared @Component reference using type
+             * alone to resolve the injection.  Useful in scenarios were we
+             * do not know or care what name the class has used to refer to the
+             * type, we simply know it needs or must accept an object of the
+             * provided type.
+             *
+             * If the class does not declare a @Component reference with the
+             * appropriate type an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder comp(final Object value) {
+                Objects.requireNonNull(value, "value must not be null");
+
+                /*
+                 * Internally, Pixie wants the value to be a name and to
+                 * subsequently lookup the specified object by name.  To
+                 * work around this, we give the specified object a unique
+                 * name, add the object to Pixie System with that name, and
+                 * then set a reference to that name.
+                 *
+                 * This could be optimized.
+                 */
+                final String refName = "unnamed$" + name + refs.incrementAndGet();
+                properties.put(this.name + "." + name, "@" + refName);
+                required.put(refName, value);
+                return this;
+            }
+
+            public DefinitionBuilder comp(final String name, final String refName) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(refName, "refName must not be null");
+
+                properties.put(this.name + "." + name, "@" + refName);
+                return this;
+            }
+
+            /**
+             * Adds an object to be possibly consumed by the created instance.
+             *
+             * Calling this method does not create the expectation the created
+             * instance needs an object of this type and will not result in
+             * any form of exception or warning.
+             *
+             * Use comp(*) to explicitly create an expectation the supplied
+             * object value must be consumed by the created instance.
+             *
+             * @param name Sets an explicit name which enables several instance of the same type to exist and be referenced
+             * @param value The object instance we anticipate may be useful to the created instance.
+             */
+            public DefinitionBuilder optional(final String name, final Object value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                if (declaration.getParam(name) != null) {
+
+                    properties.put(this.name + "." + name, value);
+
+                } else if (declaration.getReference(name) != null) {
+
+                    comp(name, value);
+
+                }
+
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final String value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final Integer value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final Boolean value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final Double value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final Float value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final Long value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final Short value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final Byte value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public DefinitionBuilder param(final String name, final Character value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value);
+                return this;
+            }
+
+            /**
+             * Sets the value of an explicitly declared @Param reference
+             * declared in the class of the instance we are creating.
+             *
+             * If the class does not declare a @Param reference with the
+             * name specified an exception will be thrown unless `warnOnUnusedProperties`
+             *
+             * Use add(*) to offer objects that may be useful to the created instance
+             * but are not known as explicit requirements.
+             */
+            public <E extends Enum<E>> DefinitionBuilder param(final String name, final E value) {
+                Objects.requireNonNull(name, "name must not be null");
+                Objects.requireNonNull(value, "value must not be null");
+
+                properties.put(this.name + "." + name, value.name());
+                return this;
+            }
+
+            private void validate() {
+                /*
+                 * Add the optional objects for component references
+                 */
+                for (final Map.Entry<String, Object> entry : required.entrySet()) {
+
+                    final boolean failIfNotUsed = !warnOnUnusedProperties;
+                    if (failIfNotUsed) {
+                        boolean used = false;
+                        final Object value = entry.getValue();
+                        for (final System.Declaration<?>.Reference reference : declaration.getReferences()) {
+                            if (reference.getType().isAssignableFrom(value.getClass())) {
+                                used=true;
+                            }
+                        }
+                        if (!used) {
+                            throw new MissingComponentDeclarationException(type, value.getClass());
+                        }
+                    }
+
+                    objects.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+            public System build() {
+                validate();
+                return SystemBuilder.this.build();
+            }
+        }
+
+        private System build() {
+            final System system = new System(warnOnUnusedProperties);
+
+            /*
+             * Add the optional objects for component references
+             */
+            for (final Map.Entry<String, Object> entry : objects.entrySet()) {
+                system.add(entry.getValue(), entry.getKey());
+            }
+
+            /*
+             * Swap the context classloader to whatever ClassLoader
+             * loaded the target class
+             */
+            system.load(properties);
+
+            return system;
+        }
+
     }
 
 }
