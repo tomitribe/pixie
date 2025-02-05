@@ -1,7 +1,17 @@
 = Pixie
 
-Pixie is a tiny 100k jar that Handles configuration, dependency injection and events.
+Pixie is a tiny 100k jar that handles configuration, dependency injection and events.
 It can handle any scenario where you would use reflection to instantiate a Java object.
+
+.Maven dependency:
+[source,xml]
+----
+<dependency>
+  <groupId>org.tomitribe.pixie</groupId>
+  <artifactId>pixie</artifactId>
+  <version>2.0</version>
+</dependency>
+----
 
 == Example
 
