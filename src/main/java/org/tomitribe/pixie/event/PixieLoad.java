@@ -30,4 +30,11 @@ public class PixieLoad {
     public Properties getProperties() {
         return properties;
     }
+
+    @Override
+    public String toString() {
+        return "PixieLoad{" +
+                "properties=" + properties.size() +
+                '}';
+    }
 }

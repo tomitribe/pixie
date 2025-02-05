@@ -47,6 +47,32 @@ public class EventConsumerAndObserverTest extends Assert {
         assertEquals("order101", emailReceipt.getOrdersProcessed().get(0).getId());
     }
 
+    @Test
+    public void observeEverything() throws Exception {
+        final System system = System.builder()
+                .definition(LogOrder.class)
+                .definition(LogEverything.class)
+                .build();
+
+        final LogOrder logOrder = system.get(LogOrder.class);
+        final LogEverything logEverything = system.get(LogEverything.class);
+
+        assertEquals(0, logOrder.getOrdersProcessed().size());
+
+        system.fireEvent(new OrderProcessed("order111"));
+        system.fireEvent(new StripeOrderProcessed("order222"));
+        system.fireEvent(new Update("New version available"));
+
+        assertEquals(2, logOrder.getOrdersProcessed().size());
+        assertEquals("order111", logOrder.getOrdersProcessed().get(0).getId());
+        assertEquals("order222", logOrder.getOrdersProcessed().get(1).getId());
+
+        assertTrue(logEverything.getEvents().size() >= 3);
+        assertTrue(logEverything.getEvents().stream().anyMatch(o -> o.getClass().equals(OrderProcessed.class)));
+        assertTrue(logEverything.getEvents().stream().anyMatch(o -> o.getClass().equals(StripeOrderProcessed.class)));
+        assertTrue(logEverything.getEvents().stream().anyMatch(o -> o.getClass().equals(Update.class)));
+    }
+
     public static class ShoppingCart {
 
         private final AtomicInteger number = new AtomicInteger(100);
@@ -85,6 +111,18 @@ public class EventConsumerAndObserverTest extends Assert {
         }
     }
 
+    public static class LogEverything {
+        private final List<Object> events = new ArrayList<>();
+
+        public void email(@Observes Object event) {
+            this.events.add(event);
+        }
+
+        public List<Object> getEvents() {
+            return events;
+        }
+    }
+
     public static class OrderProcessed {
         private final String id;
 
@@ -95,5 +133,48 @@ public class EventConsumerAndObserverTest extends Assert {
         public String getId() {
             return id;
         }
+
+        @Override
+        public String toString() {
+            return "OrderProcessed{" +
+                    "id='" + id + '\'' +
+                    '}';
+        }
     }
+
+    public static class StripeOrderProcessed extends OrderProcessed {
+
+        public StripeOrderProcessed(final String id) {
+            super(id);
+        }
+
+
+        @Override
+        public String toString() {
+            return "StripeOrderProcessed{" +
+                    "id='" + getId() + '\'' +
+                    '}';
+        }
+    }
+
+    public static class Update {
+        private final String id;
+
+        public Update(final String id) {
+            this.id = id;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        @Override
+        public String toString() {
+            return "Update{" +
+                    "id='" + id + '\'' +
+                    '}';
+        }
+    }
+
+
 }

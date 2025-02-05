@@ -401,7 +401,7 @@ public class Instance {
              * Add the optional objects for component references
              */
             for (final Map.Entry<String, Object> entry : optionalObjects.entrySet()) {
-                system.add(entry.getValue(), entry.getKey());
+                system.add(entry.getKey(), entry.getValue());
             }
 
             /*
@@ -423,7 +423,7 @@ public class Instance {
                 }
 
 
-                system.add(entry.getValue(), entry.getKey());
+                system.add(entry.getKey(), entry.getValue());
             }
 
             /*

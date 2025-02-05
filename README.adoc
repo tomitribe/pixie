@@ -1,51 +1,40 @@
 = Pixie
 
-Pixie replaces any scenario where you would use reflection to instantiate a Java object.
-Handles configuration, dependency injection and events.
+Pixie is a tiny 100k jar that Handles configuration, dependency injection and events.
+It can handle any scenario where you would use reflection to instantiate a Java object.
 
-== Configuration
+== Example
 
-Pixie is bootstrapped from a plain properties file.  Inside the properties
-is a complete definition of the system.  Configuration files look similar to
-this:
+Let's imagine we want to use Pixie to configure and build two classes we've created called `Person` and `Address`.
 
-[source,properties]
-----
-jon=new://org.example.Person
-jon.age = 46
-jon.address=@home
-
-home=new://org.example.Address
-home.street=823 Roosevelt Street
-home.city=River Falls
-home.state=WI
-home.zipcode=54022
-home.color?=blue
-home.country?=USA
-----
-
-=== Strict Validation for Accurate Configurations
-
-Pixie enforces a strict validation mechanism where every property in the configuration file must correspond to an `@Param` or `@Component` in the respective class. This design ensures:
-
-- Error Prevention: Configuration typos or outdated options are caught immediately during component initialization, preventing unexpected behavior at runtime.
-- Clarity and Transparency: Users can trust that only explicitly defined options affect the behavior of the application, avoiding confusion about whether a setting is valid or not.
-- Ease of Maintenance: If an option is removed or renamed, the system fails fast, guiding users to correct their configuration rather than silently ignoring invalid entries.
-
-== Components
-
-The sample configuration above references two classes that must be built:
-
- - org.example.Person
- - org.example.Address
-
-Here is how they would be defined.  First, let's start with `Address`.  Pixie would
-build this component first because it doesn't have any references to any other
-components, so is the least likely to cause a circular reference.
+Our first step is to annotate the constructor parameters with Pixie annotations.  Pixie will map the configuration to
+our constructor based on the names we use.
 
 [source,java]
 ----
-public static class Address {
+import org.tomitribe.pixie.Component;
+import org.tomitribe.pixie.Default;
+import org.tomitribe.pixie.Name;
+import org.tomitribe.pixie.Param;
+
+public class Person {
+
+    private final String name;
+    private final Integer age;
+    private final Address address;
+
+    public Person(@Name final String name,
+                  @Param("age") final Integer age,
+                  @Component("address") final Address address) {
+        this.name = name;
+        this.age = age;
+        this.address = address;
+    }
+
+    //...
+}
+
+public class Address {
     private final String street;
     private final String city;
     private final State state;
@@ -63,230 +52,365 @@ public static class Address {
         this.zipcode = zipcode;
         this.country = country;
     }
+    //...
+}
 
-    public String getStreet() {
-        return street;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public State getState() {
-        return state;
-    }
-
-    public int getZipcode() {
-        return zipcode;
-    }
-
-    public String getCountry() {
-        return country;
-    }
+public enum State {
+    WI, MN, CA;
 }
 ----
 
-Notice all the fields are final.  Pixie only supports constructor injection.  This
-allows us to both create safe runtime objects whose fields are final, but it also
-gives us the ability to test our components without Pixie.
+We can use the Pixie `System` to configure and build the above objects via either a Properties file defintion or in code via a Builder API
 
-=== @Param
+=== Properties
 
-Also note that Pixie supports injecting configuration properties via `@Param`.  The
-value of the annotation points to the particular property you want.  It can be either
-a relative reference as shown above, or an absolute reference.
-
-Options are first assumed to be relative, so given `@Param("city")` on a component
-whose name is `jon`, Pixie would imply `jon.` in the name and first look for this
-property:
-
- - `jon.city`
-
-If this does not succeed, Pixie will simply look in the global configuration for:
-
- -  `city`
-
-Of course, many components may reference the same property `city`.  Using `jon.city`
-would be the only way to target it specifically to the `Person` named `jon`
-
-==== @Param types
-
-Options may be `String`, `int`, `float` and other kinds of Java primitives.  They also
-can be any object type that matches either of these rules:
-
- - Has a public constructor that takes `String`
- - Has a state method that takes `String` and returns an instance of itself
-
-This allows Pixie to support Enums, classes like `URI.create(String)` and more.
-
-=== @Default
-
-In the above `@Param("city")`, if `jon.city` and `city` are not found, Pixie will look
-for an `@Default` annotation on the same parameter and use that for the default setting.
-
-This allows Pixie configuration files to be small and only contain what the user has chosen
-to manage.
-
-=== @Nullable
-
-`@Nullable` is a qualifier used to indicate an optional parameter is null.
-This way, you don't need to add a `@Default`  annotation with a constant you will then have to test in the code.
-
-For instance in `@Param("city") @Nullable final String city`, if city hasn't been specified, city will be `null`.
-
-IMPORTANT: It is invalid to use both `@Default` and `@Nullable`.
-
-NOTE: `@Nullable` can also be applied to component injections.
-Pixie will then look in the system instance if the component is available.
-If not, it won't try to lazily create an instance to inject it.
-
-=== @Name
-
-`@Name` is used on a parameter to get the name of the current component injected.
-
-```
-public static class Person {
-
-    private final String name;
-    private final int age;
-
-    public Person(@Name final String name,
-                  @Param("age") final int age) {
-        this.name = name;
-        this.age = age;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getAge() {
-        return age;
-    }
-}
-```
-
-With the following configuration
-
-```
-alfred = new://Person
-alfred.age = 20
-
-john = new://Person
-john.age = 52
-
-nick = new://Person
-nick.age = 75
-```
-
-With the `Person` class above and the configuration above, Pixie will instantiate 3 `Person` instances.
-The first instance will get `alfred` for the injected name, next instance will respectively receive `john` and `nick`.
-
-=== @Component
-
-One component may reference another component via annotating the respective constructor
-parameter with `@Component` this tells Pixie to look for a component of that specific
-name and type.
+The following code would build a Pixie `System` via a `java.util.Properties` instance and lookup
+the `Person` instance by type.
 
 [source,java]
 ----
-public static class Person {
+import java.util.Properties;
+import org.example.Person;
+import org.tomitribe.pixie.System;
 
-    private final String name;
+//...
+
+public static void main(String[]) {
+
+    final Properties properties = new Properties();
+    properties.load(...); // read the properties file
+
+    final System system = new System(properties);
+
+    final Person person = system.get(Person.class);
+    assertEquals("jane", person.getName();
+
+    final Address address = person.getAddress();
+    assertNotNull(address);
+    assertEquals("820 Roosevelt Street", address.getStreet());
+
+}
+----
+
+Our properties file might look like so.  The file name and location can be anything as it's our
+job to read this into a `java.util.Properties` instance.
+
+[source,properties]
+----
+jon = new://org.example.Person
+jon.age = 46
+jon.address = @home
+
+home = new://org.example.Address
+home.street = 823 Roosevelt Street
+home.city = River Falls
+home.state = WI
+home.zipcode = 54022
+home.country = USA
+----
+
+=== Builder API
+
+Alternatively, we can skip the properties and build our `System` in code fluently.
+
+[source,java]
+----
+import java.util.Properties;
+import org.example.Person;
+import org.tomitribe.pixie.System;
+
+//...
+
+public static void main(String[]) {
+
+    final System system = System.builder()
+
+            .definition(Person.class, "jane")
+            .param("age", 37)
+            .comp("address", "home")
+
+            .definition(Address.class, "home")
+            .param("street", "820 Roosevelt Street")
+            .param("city", "River Falls")
+            .param("state", "WI")
+            .param("zipcode", "54022")
+
+            .build();
+
+    final Person person = system.get(Person.class);
+
+    //...
+}
+
+----
+
+== Pixie Constructor Annotations
+
+Pixie supports constructor injection.  Each parameter the constructor Pixie will use must be annotated with either `@Param`, `@Component`, `@Event` or `@Name`.
+
+[options="header"]
+|===
+| Annotation   | Purpose | Example Usage
+| `@Param`     | Maps a constructor parameter to a config property | `@Param("username") final String username`
+| `@Default`   | Provides a default value if the property is missing | `@Param("country") @Default("USA") final String country`
+| `@Component` | Injects a dependent object built by or given to Pixie `System` | `@Component final PaymentProcessor paymentProcessor`
+| `@Nullable`  | Allows a property to be `null` if missing | `@Nullable @Param("footer") final String footer`
+| `@Name`      | Injects the component's name from the config | `@Name final String serviceName`
+| `@Event`     | Injects a `Consumer<T>` to fire events | `@Event final Consumer<OrderPlaced> event`
+| `@Observes`  | Marks a method as an event listener | `public void onEvent(@Observes OrderPlaced event)`
+|===
+
+All the above annotations are in the `org.tomitribe.pixie` package.
+
+== `@Param`
+*Purpose:* Binds a constructor parameter to a configuration property.
+
+*Usage:* Pixie will automatically inject values from a properties file or the builder API.
+
+.Example:
+[source,java]
+----
+public final class User {
+    private final String username;
     private final int age;
-    private final Address address;
 
-    public Person(@Name final String name,
-                  @Param("age") final int age,
-                  @Component("address") final Address address) {
-        this.name = name;
+    public User(@Param("username") final String username, @Param("age") final int age) {
+        this.username = username;
         this.age = age;
-        this.address = address;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public Address getAddress() {
-        return address;
     }
 }
 ----
 
-In the original configuration example, our `Person` named `jon` is configured to need
-an address called `@home`.
-
+*Maps to a properties file entry:*
+[source,properties]
 ----
-jon.address=@home
+user=new://org.example.User
+user.username=alice
+user.age=30
 ----
 
-The `@` symbol tells Pixie that the configuration value points to another component
-named home.
+Any Java type that can be created from a `String` is supported.  Pixie will inspect the java class and look for one of the following:
 
-If no `Address` component exists, Pixie will look to see if `Address` is a class that
-Pixie can build.  If so, Pixie will attempt to create one on the fly hoping there
-are enough defaults and configuration to fully create the object.  If not, Pixie will
-fail and the system will not start up.
+ - Public constructor with a single parameter of type `String`
+ - Public static method with a single parameter of type `String` returning an instance of the type
 
-== No Property lookups
+---
 
-Pixie intentionally does not expose any `getProperty` style of methods that allow
-configuration values to be looked up.  You must create a simple object with a constructor
-annotated with `@Param` and ask Pixie to create it.
+== `@Default`
+*Purpose:* Specifies a default value for a constructor parameter if it is not set in the configuration.
 
-This limitation is intentional so that configuration properties can only be referenced
-via strongly typed annotations, which means we can statically know the name and type every
-single available configuration property the system supports.
+.Example:
+[source,java]
+----
+public final class Address {
+    private final String country;
 
-We don't want to give up this advantage for the ease of doing string lookups.
+    public Address(@Param("country") @Default("USA") final String country) {
+        this.country = country;
+    }
+}
+----
 
-This doesn't cost us anything and in fact it adds considerably to properties management.  
+If `country` is missing from the config, `"USA"` is used.  Applies to both `@Param` and `@Component`.  When used on `@Component` it implies the name of the component that should be injected.
 
-Let's say we have good reason to create "global" properties.  We'd normally feel compelled
-to prefix everything with `pixie.`, however let's imagine a comprimise where we use the module
-name as the prefix.
+---
 
-Say for example we have three modules:
+== `@Component`
+*Purpose:* Indicates that a constructor parameter should be injected as a component dependency.
 
- - pixie-system
- - pixie-core
- - pixie-openejb
+.Example:
+[source,java]
+----
+public final class ShoppingCart {
+    private final PaymentProcessor paymentProcessor;
 
-Let's now imagine this pattern as a very clever way to archive module-scoped properties.
+    public ShoppingCart(@Component("processor") final PaymentProcessor paymentProcessor) {
+        this.paymentProcessor = paymentProcessor;
+    }
+}
+----
+
+Pixie can resolve this reference by name or by type.
+
+.Resolution by name:
+[source,properties]
+----
+cart=new://org.example.ShoppingCart
+cart.processor=@stripe
+----
+
+With the above configuration Pixie will look in the `System` for an object with the
+name `stripe` and inject it as the value of the `processor` when constructing the `ShoppingCart`.
+
+A `ConstructionFailedException` will be thrown if no object with that name is found or if the object found is of the wrong type.
+
+.Resolution by type:
+[source,properties]
+----
+cart=new://org.example.ShoppingCart
+----
+
+In the above configuration the `processor` name has not be specified.  In this situation, Pixie will
+look in the `System` for any object with the the type `PaymentProcessor` and inject it as the value of the `processor` when constructing the `ShoppingCart`.
+
+If there are *multiple instances* of `PaymentProcessor` they will be sorted in descending order by name and the first will be picked.
+
+A `ConstructionFailedException` will be thrown if no objects with that type are found.
+
+=== Adding Custom Components
+
+The `@Component` annotation can be used to resolve components which are added directly to the Pixie `System`.
+
+.Properties:
+[source,properties]
+----
+jane=new://org.example.Person\n" +
+jane.age = 37
+jane.address=@home
+----
+
+In the above properties, the Person object has a `@Component` reference to `Address` called `home` which is not defined.
+The `home` instance can be added directly to the Pixie `System` before we load the properties.
+
+.Adding to Pixie System:
+[source,java]
+----
+final Properties properties = //...
+
+final System system = new System();
+system.add("home", new Address("820 Roosevelt Street","River Falls", State.WI, 54022, "USA"));
+system.load(properties);
+
+final Person person = system.get(Person.class);
+assertNotNull(person.getAddress());
+----
+
+In the above code we've directly created the `Address` instance and handed it to Pixie `System` with the name `home`.
+
+---
+
+== `@Nullable`
+*Purpose:* Marks a constructor parameter as optional (can be `null` if not configured).
+
+.Example:
+[source,java]
+----
+public final class Notification {
+    private final String message;
+    private final String footer;
+
+    public Notification(@Param("message") final String message, @Nullable @Param("footer") final String footer) {
+        this.message = message;
+        this.footer = footer;
+    }
+}
+----
+
+If `footer` is missing from the config, it will be `null` instead of throwing an error.
+
+---
+
+== `@Name`
+*Purpose:* Injects the component’s name from the configuration.
+
+.Example:
+[source,java]
+----
+public final class Service {
+    private final String serviceName;
+
+    public Service(@Name final String serviceName) {
+        this.serviceName = serviceName;
+    }
+}
+----
+
+If configured as `myService = new://com.foo.Service`, the constructor will receive `"myService"`.
+
+---
+
+== `@Event`
+*Purpose:* Injects an event consumer (`Consumer<T>`) into a component so it can fire events.
+
+.Example:
+[source,java]
+----
+public final class OrderService {
+    private final Consumer<OrderPlaced> orderPlacedEvent;
+
+    public OrderService(@Event final Consumer<OrderPlaced> orderPlacedEvent) {
+        this.orderPlacedEvent = orderPlacedEvent;
+    }
+
+    public void placeOrder(final String orderId) {
+        orderPlacedEvent.accept(new OrderPlaced(orderId));
+    }
+}
+----
+
+Pixie will inject a `Consumer<OrderPlaced>` that calls `System.fire(event)` which will
+invoke all observer methods in all components in the `System`.
+
+---
+
+== `@Observes`
+*Purpose:* Marks a method as an event listener.
+
+.Example:
+[source,java]
+----
+public final class OrderListener {
+    public void onOrderPlaced(@Observes final OrderPlaced event) {
+        System.out.println("Order placed: " + event.getOrderId());
+    }
+}
+----
+
+When `OrderPlaced` is fired, this method will be called automatically.
+
+It is possible to listen for events by any assignable type, even `java.lang.Object`
+
+.Example:
+[source,java]
+----
+public final class EverythingListener {
+    public void onEvent(@Observes final Object event) {
+        System.out.println("Event observed: " + event);
+    }
+}
+----
+
+
+---
+
+== Configuration Validation
+
+Pixie provides strict validation to ensure configuration correctness and prevent common issues with properties files.
+
+=== Case Insensitivity
+All properties in Pixie are **case insensitive**, meaning users will not encounter failures due to incorrect capitalization. For example, the following entries are treated as equivalent:
 
 [source,properties]
 ----
-system=new://pixie.org.tomitribe.SystemOptions
-system.debug=true
-system.licence=1234-2315123412-12316125
-system.keystore=somepath.keys
-
-core=new://com.tomitribe.pixie.core.CoreOptions
-core.dateformat=YYYY-mm-dd
-core.timeunit=NANOSECONDS
-core.checkinterval=10 seconds
-
-openejb=new://com.tomitribe.pixie.openejb.OpenEjbOptions
-openejb.debug=true
-openejb.database=MONITOR
-openejb.entitymanager=INGORE
+user.name=Alice
+User.Name=Alice
+USER.NAME=Alice
 ----
 
-There are interesting points about the above pattern:
+Regardless of how the property is written, it will be correctly matched and retrieved.
 
- - If a user specifies a property that doesn't exist, an exception will be thrown.  A common issue with normal properties is when the code that looked it up and acted upon it is deleted.  There's no indication to the user they may be attempting to use a "dead" property.  Here, the user cannot be mislead by specifying a module property that does not exist.
- 
- - Code remains clean.  To reference the property in various places in the module you would need to get the respective "Options" class injected.  If you do not have that module as a dependency, you cannot do this.  In the above imaginary scenario, code in `pixie-openejb` can see `OpenEjbOptions`, `CoreOptions` and `SystemOptions`.  However, code from `pixie-system` cannot see `OpenEjbOptions` or even `CoreOptions`.
- 
- - You always know where to look.  If a property doesn't fit anywhere in particular, it goes into the module's "Options" class.  There's no time wasted by over-thinking how to manage the property and where it belongs.  Further, you can go to the Options class and do a "Find Usages" in the IDE to see who is using the property and how.
- 
- - Easy refactoring.  If you have more than one bit of code using the property and you wish to rename the property, there are no string usages of it to worry about.  You can change its type or name very easily using regular refactoring features of the IDE.  No string find-and-replace.
- 
- - Easy Deprecation.  It would be quite easy for us to add annotations to support deprecating properties in favor of new names.  This could involve logging a warning to the user, updating the config and proceeding forward.
+=== Strict Property Validation
+Pixie enforces strict validation of configuration properties to prevent misconfigurations:
 
+- If a property is **specified in the configuration file but does not exist in the corresponding class**, Pixie will **throw an exception** at startup.
+- This ensures that typos or removed properties do not lead to silent failures.
 
+For example, given the following properties file:
+
+[source,properties]
+----
+app.mode=production
+app.timeout=5000
+----
+
+If the `app.timeout` property is removed from the Java class but remains in the configuration file, Pixie will **fail fast** with an error, preventing users from relying on "dead" properties.

@@ -77,6 +77,33 @@ public class SystemTest extends Assert {
     }
 
     @Test
+    public void customObject() throws Exception {
+        final Properties properties = new Properties();
+        properties.load(IO.read("" +
+                "jane=new://org.tomitribe.pixie.SystemTest$Person\n" +
+                "jane.age = 37\n" +
+                "jane.address=@home\n"));
+
+        final System system = new System();
+        system.add("home", new Address("820 Roosevelt Street","River Falls", State.WI,54022, "USA"));
+        system.load(properties);
+
+        final Person jane = system.get(Person.class);
+
+        assertNotNull(jane);
+        assertEquals("jane", jane.getName());
+        assertEquals(37, jane.getAge().intValue());
+
+        final Address address = jane.getAddress();
+        assertNotNull(address);
+        assertEquals("820 Roosevelt Street", address.getStreet());
+        assertEquals("River Falls", address.getCity());
+        assertEquals(State.WI, address.getState());
+        assertEquals(54022, address.getZipcode());
+        assertEquals("USA", address.getCountry());
+    }
+
+    @Test
     public void testAllowMissingProperties() throws Exception {
         final Properties properties = new Properties();
         properties.load(IO.read(configMissingProperties));

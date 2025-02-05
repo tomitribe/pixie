@@ -120,6 +120,52 @@ public class SystemBuilderTest extends Assert {
         assertEquals(54022, address.getZipcode());
         assertEquals("USA", address.getCountry());
     }
+    /**
+     * The name for the 'address' reference in Person is not specified AND
+     * The name for the Address definition is not specified
+     * @throws Exception
+     */
+    @Test
+    public void typeRefMultiple() throws Exception {
+        final System system = System.builder()
+
+                .definition(Person.class, "jane")
+                .param("age", 37)
+
+                .definition(Address.class, "bbb")
+                .param("street", "123 Main Street")
+                .param("city", "River Falls")
+                .param("state", "WI")
+                .param("zipcode", "54022")
+
+                .definition(Address.class, "aaa")
+                .param("street", "820 Roosevelt Street")
+                .param("city", "River Falls")
+                .param("state", "WI")
+                .param("zipcode", "54022")
+
+                .definition(Address.class, "ccc")
+                .param("street", "456 Wasson Lane")
+                .param("city", "River Falls")
+                .param("state", "WI")
+                .param("zipcode", "54022")
+
+                .build();
+
+        final Person jane = system.get(Person.class);
+
+        assertNotNull(jane);
+        assertEquals("jane", jane.getName());
+        assertEquals(37, jane.getAge().intValue());
+
+        final Address address = jane.getAddress();
+        assertNotNull(address);
+        assertEquals("820 Roosevelt Street", address.getStreet());
+        assertEquals("River Falls", address.getCity());
+        assertEquals(State.WI, address.getState());
+        assertEquals(54022, address.getZipcode());
+        assertEquals("USA", address.getCountry());
+    }
 
     /**
      * The name for the 'address' reference in Person is not specified AND
@@ -178,6 +224,20 @@ public class SystemBuilderTest extends Assert {
         assertEquals(54022, address.getZipcode());
         assertEquals("USA", address.getCountry());
 
+    }
+
+    /**
+     * In this test there is no component with the name 'office'
+     */
+    @Test(expected = org.tomitribe.pixie.comp.ConstructionFailedException.class)
+    public void componentNameNotFound() throws Exception {
+
+        final System system = System.builder()
+                .add("home", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .definition(Person.class)
+                .param("age", "37")
+                .comp("address", "@office")
+                .build();
     }
 
     /**

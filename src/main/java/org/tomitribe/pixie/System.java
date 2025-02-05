@@ -92,7 +92,7 @@ public class System implements Closeable {
     public System(final Properties properties, final boolean warnOnUnusedProperties) {
         this.warnOnUnusedProperties = warnOnUnusedProperties;
         // Add System as a component that can be injected
-        add(this, "system");
+        add("system", this);
         load(properties);
     }
 
@@ -279,7 +279,7 @@ public class System implements Closeable {
         }
     }
 
-    public <T> void add(final T value, final String name) {
+    public <T> void add(final String name, final T value) {
         addInstance(new Instance<>(name, value));
     }
 
@@ -988,7 +988,6 @@ public class System implements Closeable {
             return this;
         }
 
-
         /**
          * Adds an object to be possibly consumed by the created instances.
          *
@@ -1001,6 +1000,20 @@ public class System implements Closeable {
             Objects.requireNonNull(value, "value must not be null");
 
             final String name = "unnamed$" + value.getClass().getSimpleName() + refs.incrementAndGet();
+            objects.put(name, value);
+
+            return this;
+        }
+
+        /**
+         * Adds an object to be possibly consumed by the created instances.
+         *
+         * @param value The object instance we anticipate may be useful to the created instances.
+         */
+        public SystemBuilder add(final String name, final Object value) {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+
             objects.put(name, value);
 
             return this;
@@ -1360,7 +1373,7 @@ public class System implements Closeable {
              * Add the optional objects for component references
              */
             for (final Map.Entry<String, Object> entry : objects.entrySet()) {
-                system.add(entry.getValue(), entry.getKey());
+                system.add(entry.getKey(), entry.getValue());
             }
 
             /*
