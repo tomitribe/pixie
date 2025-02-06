@@ -74,6 +74,23 @@ We can use the Pixie `System` to configure and build the above objects via eithe
 
 === Properties
 
+Our properties file might look like so.  The file name and location can be anything as it's our
+job to read this into a `java.util.Properties` instance.
+
+[source,properties]
+----
+jon = new://org.example.Person
+jon.age = 46
+jon.address = @home
+
+home = new://org.example.Address
+home.street = 823 Roosevelt Street
+home.city = River Falls
+home.state = WI
+home.zipcode = 54022
+home.country = USA
+----
+
 The following code would build a Pixie `System` via a `java.util.Properties` instance and lookup
 the `Person` instance by type.
 
@@ -100,23 +117,6 @@ public static void main(String[]) {
     assertEquals("820 Roosevelt Street", address.getStreet());
 
 }
-----
-
-Our properties file might look like so.  The file name and location can be anything as it's our
-job to read this into a `java.util.Properties` instance.
-
-[source,properties]
-----
-jon = new://org.example.Person
-jon.age = 46
-jon.address = @home
-
-home = new://org.example.Address
-home.street = 823 Roosevelt Street
-home.city = River Falls
-home.state = WI
-home.zipcode = 54022
-home.country = USA
 ----
 
 === Builder API
