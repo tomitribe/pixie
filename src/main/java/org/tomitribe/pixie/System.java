@@ -81,8 +81,8 @@ public class System implements Closeable {
         this(new Properties(), false);
     }
 
-    public System(final boolean wantOnUnusedProperties) {
-        this(new Properties(), wantOnUnusedProperties);
+    public System(final boolean warnOnUnusedProperties) {
+        this(new Properties(), warnOnUnusedProperties);
     }
 
     public System(final Properties properties) {
