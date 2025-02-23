@@ -28,7 +28,7 @@ public class Pixie {
     
     private Pixie() {
         // no-op
-        // Trixie can't be instantiated.
+        // Pixie can't be instantiated.
     }
 
     public static boolean isLoaded() {
@@ -45,24 +45,24 @@ public class Pixie {
     public static void load(final Properties properties) {
         try {
             if (!loaded.compareAndSet(false, true)) {
-                LOGGER.info(String.format("Trixie already initialized for classloader %s - Loaded %s properties",
+                LOGGER.info(String.format("Pixie already initialized for classloader %s - Loaded %s properties",
                                           Thread.currentThread().getContextClassLoader(), properties.size()));
                 return;
             }
             SYSTEM.load(properties);
-            LOGGER.info(String.format("TRIXIE SUCCESS - Loaded %s properties", properties.size()));
+            LOGGER.info(String.format("PIXIE SUCCESS - Loaded %s properties", properties.size()));
         } catch (RuntimeException e) {
-            LOGGER.log(Level.SEVERE, String.format("TRIXIE FAILED - %s", e.getMessage()), e);
+            LOGGER.log(Level.SEVERE, String.format("PIXIE FAILED - %s", e.getMessage()), e);
         }
     }
 
     public static void close() {
         try {
             SYSTEM.close();
-            LOGGER.info("TRIXIE SUCCESS - Closed");
+            LOGGER.info("PIXIE SUCCESS - Closed");
 
         } catch (final Exception e) {
-            LOGGER.log(Level.SEVERE, String.format("TRIXIE FAILED - %s", e.getMessage()), e);
+            LOGGER.log(Level.SEVERE, String.format("PIXIE FAILED - %s", e.getMessage()), e);
         }
     }
 
