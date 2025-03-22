@@ -301,6 +301,14 @@ public class System implements Closeable {
         return get(type, null, create);
     }
 
+    public <T> T get(final Class<T> type, final String name) {
+        return get(type, name, true);
+    }
+
+    public <T> T get(final Class<T> type, final boolean create, final String name) {
+        return get(type, name, create);
+    }
+
     /**
      * For the moment, let's not expose the complexity of looking
      * things up by name.  We've lived without it for quite a while,
