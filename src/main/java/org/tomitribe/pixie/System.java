@@ -271,6 +271,10 @@ public class System implements Closeable {
             return clazz.isAssignableFrom(object.getClass());
         }
 
+        public boolean isAnnotationPresent(final Class<? extends Annotation> type) {
+            return object.getClass().isAnnotationPresent(type);
+        }
+
         @Override
         public String toString() {
             return "Instance{" +
@@ -278,6 +282,7 @@ public class System implements Closeable {
                     ", object=" + object +
                     '}';
         }
+
     }
 
     public <T> void add(final String name, final T value) {
@@ -384,7 +389,7 @@ public class System implements Closeable {
 
     public List<Object> getAnnotated(final Class<? extends Annotation> type) {
         return objects.stream()
-                .filter(instance -> instance.getClass().isAnnotationPresent(type))
+                .filter(instance -> instance.isAnnotationPresent(type))
                 .map(Instance::getObject)
                 .collect(Collectors.toList());
     }

@@ -17,7 +17,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tomitribe.util.IO;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.List;
 import java.util.Properties;
+import java.util.function.BinaryOperator;
 
 public class SystemTest extends Assert {
 
@@ -85,7 +91,7 @@ public class SystemTest extends Assert {
                 "jane.address=@home\n"));
 
         final System system = new System();
-        system.add("home", new Address("820 Roosevelt Street","River Falls", State.WI,54022, "USA"));
+        system.add("home", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"));
         system.load(properties);
 
         final Person jane = system.get(Person.class);
@@ -147,6 +153,42 @@ public class SystemTest extends Assert {
         assertEquals("USA", address.getCountry());
     }
 
+    @Test
+    public void getAnnotated() throws Exception {
+        final Properties properties = new Properties();
+        properties.load(IO.read("" +
+                "red=new://org.tomitribe.pixie.SystemTest$Red\n" +
+                "green=new://org.tomitribe.pixie.SystemTest$Green\n" +
+                "blue=new://org.tomitribe.pixie.SystemTest$Blue\n" +
+                "circle=new://org.tomitribe.pixie.SystemTest$Circle\n" +
+                "triangle=new://org.tomitribe.pixie.SystemTest$Triangle\n" +
+                "square=new://org.tomitribe.pixie.SystemTest$Square\n"));
+
+        final System system = new System();
+        system.load(properties);
+
+        final List<Object> colors = system.getAnnotated(Color.class);
+        assertClasses(colors, "org.tomitribe.pixie.SystemTest$Blue\n" +
+                "org.tomitribe.pixie.SystemTest$Green\n" +
+                "org.tomitribe.pixie.SystemTest$Red");
+
+        final List<Object> shapes = system.getAnnotated(Shape.class);
+        assertClasses(shapes, "org.tomitribe.pixie.SystemTest$Circle\n" +
+                "org.tomitribe.pixie.SystemTest$Square\n" +
+                "org.tomitribe.pixie.SystemTest$Triangle");
+    }
+
+    private void assertClasses(final List<Object> colors, final String expected) {
+        final String actual = colors.stream()
+                .map(Object::getClass)
+                .map(Class::getName)
+                .sorted()
+                .reduce((s, s2) -> s + "\n" + s2)
+                .get();
+
+        assertEquals(expected, actual);
+    }
+
     public static class Person {
 
         private final String name;
@@ -181,6 +223,42 @@ public class SystemTest extends Assert {
                     ", address=" + address +
                     '}';
         }
+    }
+
+    @Color
+    public static class Red {
+    }
+
+    @Color
+    public static class Green {
+    }
+
+    @Color
+    public static class Blue {
+    }
+
+    @Shape
+    public static class Square {
+    }
+
+    @Shape
+    public static class Circle {
+    }
+
+    @Shape
+    public static class Triangle {
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface Color {
+
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface Shape {
+
     }
 
     public static class Address {
