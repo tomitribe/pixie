@@ -13,10 +13,14 @@
  */
 package org.tomitribe.pixie;
 
+import org.tomitribe.pixie.comp.ComponentException;
+import org.tomitribe.pixie.comp.ComponentReferenceSyntaxException;
 import org.tomitribe.pixie.comp.ConstructionFailedException;
 import org.tomitribe.pixie.comp.Constructors;
 import org.tomitribe.pixie.comp.EventReferences;
 import org.tomitribe.pixie.comp.InjectionPoint;
+import org.tomitribe.pixie.comp.InvalidConstructorException;
+import org.tomitribe.pixie.comp.InvalidNullableWithDefaultException;
 import org.tomitribe.pixie.comp.InvalidParamValueException;
 import org.tomitribe.pixie.comp.MissingComponentClassException;
 import org.tomitribe.pixie.comp.MissingComponentDeclarationException;
@@ -29,14 +33,11 @@ import org.tomitribe.pixie.event.ComponentAdded;
 import org.tomitribe.pixie.event.PixieClose;
 import org.tomitribe.pixie.event.PixieLoad;
 import org.tomitribe.pixie.observer.ObserverManager;
-import org.tomitribe.pixie.comp.ComponentException;
-import org.tomitribe.pixie.comp.ComponentReferenceSyntaxException;
-import org.tomitribe.pixie.comp.InvalidConstructorException;
-import org.tomitribe.pixie.comp.InvalidNullableWithDefaultException;
 import org.tomitribe.util.Join;
 import org.tomitribe.util.editor.Converter;
 
 import java.io.Closeable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
@@ -381,6 +382,13 @@ public class System implements Closeable {
                 .collect(Collectors.toList());
     }
 
+    public List<Object> getAnnotated(final Class<? extends Annotation> type) {
+        return objects.stream()
+                .filter(instance -> instance.getClass().isAnnotationPresent(type))
+                .map(Instance::getObject)
+                .collect(Collectors.toList());
+    }
+
 
     public <E> E fireEvent(final E event) {
         return observerManager.fireEvent(event);
@@ -503,10 +511,10 @@ public class System implements Closeable {
 
         if (warnOnUnusedProperties) {
             overrides.entrySet().stream()
-            .filter(isSupported.negate())
-            .forEach(entry -> {
-                 LOGGER.warning("Warning: Unused property '" + entry.getKey() + "' in " + declaration.getClazz().getName());
-             });
+                    .filter(isSupported.negate())
+                    .forEach(entry -> {
+                        LOGGER.warning("Warning: Unused property '" + entry.getKey() + "' in " + declaration.getClazz().getName());
+                    });
 
             return Collections.emptyList();
         } else {
@@ -1356,7 +1364,7 @@ public class System implements Closeable {
                         final Object value = entry.getValue();
                         for (final System.Declaration<?>.Reference reference : declaration.getReferences()) {
                             if (reference.getType().isAssignableFrom(value.getClass())) {
-                                used=true;
+                                used = true;
                             }
                         }
                         if (!used) {
