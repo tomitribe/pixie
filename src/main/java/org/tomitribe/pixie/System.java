@@ -68,15 +68,15 @@ import java.util.stream.Collectors;
  */
 public class System implements Closeable {
 
-    private final boolean warnOnUnusedProperties;
+    protected final boolean warnOnUnusedProperties;
 
-    private final Map<String, String> parameters = new ConcurrentHashMap<>();
+    protected final Map<String, String> parameters = new ConcurrentHashMap<>();
 
-    private final List<Instance> objects = new CopyOnWriteArrayList<>();
+    protected final List<Instance> objects = new CopyOnWriteArrayList<>();
 
-    private final ObserverManager observerManager = new ObserverManager();
+    protected final ObserverManager observerManager = new ObserverManager();
 
-    private static final Logger LOGGER = Logger.getLogger(System.class.getName());
+    protected static final Logger LOGGER = Logger.getLogger(System.class.getName());
 
     public System() {
         this(new Properties(), false);
@@ -795,7 +795,7 @@ public class System implements Closeable {
             @Override
             public Object resolveValue() {
                 final Class<?> eventType = EventReferences.eventType(parameter);
-                return System.this.observerManager.consumersOf(eventType);
+                return consumersOf(eventType);
             }
         }
 
