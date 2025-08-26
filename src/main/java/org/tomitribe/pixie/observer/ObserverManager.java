@@ -130,7 +130,12 @@ public class ObserverManager {
 
         @Override
         public void accept(final E e) {
-            getInvocation().invoke(e);
+            try {
+                getInvocation().invoke(e);
+
+            } finally {
+                seen.remove();
+            }
         }
 
         private Invocation getInvocation() {
@@ -291,19 +296,19 @@ public class ObserverManager {
                 }
 
                 if (method.getParameterTypes().length > 1) {
-                    throw new IllegalArgumentException("@Observes method must have only 1 parameter: " + method.toString());
+                    throw new IllegalArgumentException("@Observes method must have only 1 parameter: " + method);
                 }
 
                 if (Modifier.isAbstract(method.getModifiers())) {
-                    throw new IllegalArgumentException("@Observes method must not be abstract: " + method.toString());
+                    throw new IllegalArgumentException("@Observes method must not be abstract: " + method);
                 }
 
                 if (Modifier.isStatic(method.getModifiers())) {
-                    throw new IllegalArgumentException("@Observes method must not be static: " + method.toString());
+                    throw new IllegalArgumentException("@Observes method must not be static: " + method);
                 }
 
                 if (!Modifier.isPublic(method.getModifiers())) {
-                    throw new IllegalArgumentException("@Observes method must be public: " + method.toString());
+                    throw new IllegalArgumentException("@Observes method must be public: " + method);
                 }
 
                 final Class<?> type = method.getParameterTypes()[0];
@@ -350,7 +355,7 @@ public class ObserverManager {
 
             if (!(generic instanceof ParameterizedType)) {
                 final Class<?> event = method.getParameterTypes()[0];
-                throw new IllegalArgumentException("@Observes " + event.getSimpleName() + " missing generic type: " + method.toString());
+                throw new IllegalArgumentException("@Observes " + event.getSimpleName() + " missing generic type: " + method);
             }
 
             final ParameterizedType parameterized = ParameterizedType.class.cast(generic);
@@ -372,7 +377,7 @@ public class ObserverManager {
                 final Class<?> event = method.getParameterTypes()[0];
                 throw new IllegalArgumentException("@Observes " + event.getSimpleName() +
                         " unsupported generic type: " + type.getClass().getSimpleName() +
-                        "  " + method.toString());
+                        "  " + method);
             }
 
             validate(method, clazz);

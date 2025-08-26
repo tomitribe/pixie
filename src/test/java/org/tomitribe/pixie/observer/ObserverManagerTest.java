@@ -15,6 +15,10 @@ package org.tomitribe.pixie.observer;
 
 import org.junit.Test;
 import org.tomitribe.pixie.Observes;
+import org.tomitribe.pixie.event.ObserverFailed;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -41,4 +45,46 @@ public class ObserverManagerTest {
             last = event;
         }
     }
+
+    @Test
+    public void exceptionWhenFireEvent() {
+        final ObserverManager mgr = new ObserverManager();
+        final CountDownLatch latch = new CountDownLatch(3);
+        final FailingObserver failingObserver = new FailingObserver(latch);
+        mgr.addObserver(failingObserver);
+        mgr.fireEvent("event1");
+        mgr.fireEvent("event2");
+        mgr.fireEvent("event3");
+        assertEquals(0, latch.getCount());
+    }
+
+    @Test
+    public void exceptionWhenConsumer() {
+        final ObserverManager mgr = new ObserverManager();
+        final CountDownLatch latch = new CountDownLatch(3);
+        final FailingObserver failingObserver = new FailingObserver(latch);
+        mgr.addObserver(failingObserver);
+        final var consumer = mgr.consumersOf(String.class);
+        consumer.accept("event1");
+        consumer.accept("event2");
+        consumer.accept("event3");
+        assertEquals(0, latch.getCount());
+    }
+
+    public static class FailingObserver {
+        private final CountDownLatch latch;
+
+        public FailingObserver(final CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        public void fail(@Observes final String event) {
+            throw new IllegalStateException("I always fail");
+        }
+
+        public void failed(@Observes final ObserverFailed event) {
+            latch.countDown();
+        }
+    }
+
 }
