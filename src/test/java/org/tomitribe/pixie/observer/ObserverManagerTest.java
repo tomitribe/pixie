@@ -71,6 +71,35 @@ public class ObserverManagerTest {
         assertEquals(0, latch.getCount());
     }
 
+    @Test
+    public void consumerOfNoObserver() {
+        final ObserverManager mgr = new ObserverManager();
+        final CountDownLatch latch = new CountDownLatch(3);
+        final FailingObserver failingObserver = new FailingObserver(latch);
+        mgr.addObserver(failingObserver);
+        final Consumer<NoObserverEvent> consumer = mgr.consumersOf(NoObserverEvent.class);
+        consumer.accept(new NoObserverEvent("hello"));
+    }
+
+    @Test
+    public void fireEventNoObserver() {
+        final ObserverManager mgr = new ObserverManager();
+        final CountDownLatch latch = new CountDownLatch(3);
+        final FailingObserver failingObserver = new FailingObserver(latch);
+        mgr.addObserver(failingObserver);
+        mgr.fireEvent(new NoObserverEvent("hello"));
+    }
+
+    public static class NoObserverEvent {
+        private final String value;
+        public NoObserverEvent(final String value) {
+            this.value = value;
+        }
+        public String getValue() {
+            return value;
+        }
+    }
+
     public static class FailingObserver {
         private final CountDownLatch latch;
 
@@ -86,5 +115,6 @@ public class ObserverManagerTest {
             latch.countDown();
         }
     }
+
 
 }
