@@ -22,13 +22,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Exists for documentation purposes
- * <p/>
+ * <p>
  * Event guidelines:
  * - Fields should be final
  * - Avoid logic
  * - Implement toString()
+ * </p>
  *
- * @version $Rev$ $Date$
  */
 @Target({PARAMETER, TYPE})
 @Retention(RUNTIME)
