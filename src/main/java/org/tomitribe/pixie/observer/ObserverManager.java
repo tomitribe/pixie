@@ -19,6 +19,7 @@ import org.tomitribe.pixie.event.AfterEvent;
 import org.tomitribe.pixie.event.BeforeEvent;
 import org.tomitribe.pixie.event.ObserverAdded;
 import org.tomitribe.pixie.event.ObserverFailed;
+import org.tomitribe.pixie.event.ObserverNotFound;
 import org.tomitribe.pixie.event.ObserverRemoved;
 import org.tomitribe.util.Join;
 
@@ -130,7 +131,12 @@ public class ObserverManager {
 
         @Override
         public void accept(final E e) {
-            getInvocation().invoke(e);
+            try {
+                getInvocation().invoke(e);
+
+            } finally {
+                seen.remove();
+            }
         }
 
         private Invocation getInvocation() {
@@ -291,19 +297,19 @@ public class ObserverManager {
                 }
 
                 if (method.getParameterTypes().length > 1) {
-                    throw new IllegalArgumentException("@Observes method must have only 1 parameter: " + method.toString());
+                    throw new IllegalArgumentException("@Observes method must have only 1 parameter: " + method);
                 }
 
                 if (Modifier.isAbstract(method.getModifiers())) {
-                    throw new IllegalArgumentException("@Observes method must not be abstract: " + method.toString());
+                    throw new IllegalArgumentException("@Observes method must not be abstract: " + method);
                 }
 
                 if (Modifier.isStatic(method.getModifiers())) {
-                    throw new IllegalArgumentException("@Observes method must not be static: " + method.toString());
+                    throw new IllegalArgumentException("@Observes method must not be static: " + method);
                 }
 
                 if (!Modifier.isPublic(method.getModifiers())) {
-                    throw new IllegalArgumentException("@Observes method must be public: " + method.toString());
+                    throw new IllegalArgumentException("@Observes method must be public: " + method);
                 }
 
                 final Class<?> type = method.getParameterTypes()[0];
@@ -350,7 +356,7 @@ public class ObserverManager {
 
             if (!(generic instanceof ParameterizedType)) {
                 final Class<?> event = method.getParameterTypes()[0];
-                throw new IllegalArgumentException("@Observes " + event.getSimpleName() + " missing generic type: " + method.toString());
+                throw new IllegalArgumentException("@Observes " + event.getSimpleName() + " missing generic type: " + method);
             }
 
             final ParameterizedType parameterized = ParameterizedType.class.cast(generic);
@@ -372,7 +378,7 @@ public class ObserverManager {
                 final Class<?> event = method.getParameterTypes()[0];
                 throw new IllegalArgumentException("@Observes " + event.getSimpleName() +
                         " unsupported generic type: " + type.getClass().getSimpleName() +
-                        "  " + method.toString());
+                        "  " + method);
             }
 
             validate(method, clazz);
@@ -479,6 +485,11 @@ public class ObserverManager {
     private static final Invocation IGNORE = new Invocation() {
         @Override
         public void invoke(final Object event) {
+            final var name = event.getClass().getName();
+            if (!name.startsWith("org.tomitribe.pixie.event.") && !(event instanceof ObserverNotFound)) {
+                ObserverManager.logger().info("No observers for event " + name); // not really an error, just informational
+                // doFire(new ObserverNotFound(event));
+            }
         }
 
         @Override

@@ -44,6 +44,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -71,6 +72,8 @@ public class System implements Closeable {
     protected final boolean warnOnUnusedProperties;
 
     protected final Map<String, String> parameters = new ConcurrentHashMap<>();
+
+    protected final Map<String, String> usedParameters = new ConcurrentHashMap<>();
 
     protected final List<Instance> objects = new CopyOnWriteArrayList<>();
 
@@ -111,10 +114,21 @@ public class System implements Closeable {
         // Get the things that were explicitly declared in the configuration
         final List<Declaration> declarations = toMap(properties).entrySet().stream()
                 .filter(entry -> entry.getValue().startsWith("new://"))
+                .peek(entry -> usedParameters.put(entry.getKey(), entry.getValue()))
                 .map(this::createDeclaration)
                 .collect(Collectors.toList());
 
         build(declarations);
+
+        // Did the user specify any properties that were not used?
+        if (warnOnUnusedProperties) {
+            parameters.entrySet().stream()
+                    .sorted(Comparator.comparing(Map.Entry::getKey))
+                    .filter(entry -> !usedParameters.containsKey(entry.getKey()))
+                    .forEach(entry -> {
+                        LOGGER.warning("Warning: Unused property '" + entry.getKey() + "'");
+                    });
+        }
 
         // fire an event at the end so components can do something after
         observerManager.fireEvent(new PixieLoad(properties));
@@ -494,14 +508,16 @@ public class System implements Closeable {
         return issues;
     }
 
-    private static void override(final Declaration declaration, final Map<String, String> overrides) {
+    private void override(final Declaration declaration, final Map<String, String> overrides) {
         for (final Map.Entry<String, String> property : overrides.entrySet()) {
             if (declaration.getParam(property.getKey()) != null) {
 
+                usedParameters.put(property.getKey(), property.getValue());
                 declaration.getParam(property.getKey()).setValue(property.getValue());
 
             } else if (declaration.getReference(property.getKey()) != null && property.getValue().startsWith("@")) {
 
+                usedParameters.put(property.getKey(), property.getValue());
                 declaration.getReference(property.getKey()).set(property.getValue().substring(1));
             }
         }
@@ -544,6 +560,7 @@ public class System implements Closeable {
 
         this.parameters.entrySet().stream()
                 .filter(entry -> entry.getKey().toLowerCase().startsWith(prefix))
+                .peek(entry -> usedParameters.put(entry.getKey(), entry.getValue()))
                 .forEach(entry -> {
                     final String key = entry.getKey().substring(prefix.length());
                     overrides.put(key, entry.getValue());
