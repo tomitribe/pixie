@@ -125,6 +125,7 @@ public class System implements Closeable {
             parameters.entrySet().stream()
                     .sorted(Comparator.comparing(Map.Entry::getKey))
                     .filter(entry -> !usedParameters.containsKey(entry.getKey()))
+                    .filter(entry -> !entry.getKey().startsWith("@"))
                     .forEach(entry -> {
                         LOGGER.warning("Warning: Unused property '" + entry.getKey() + "'");
                     });
