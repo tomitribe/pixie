@@ -19,6 +19,7 @@ import org.tomitribe.pixie.event.BeforeEvent;
 import org.tomitribe.pixie.event.ObserverFailed;
 import org.junit.Before;
 import org.junit.Test;
+import org.tomitribe.pixie.event.ObserverSucceeded;
 
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -29,6 +30,41 @@ import java.util.List;
 
 public class ObserverFeaturesTest {
 
+    @Test
+    public void observerSucceeds() {
+        a(new Object() {
+            public void observe(final @Observes Integer event) {
+                // nothing here
+            }
+
+            public void fails(@Observes ObserverFailed event) {
+                fail();
+            }
+
+            public void passes(@Observes ObserverSucceeded event) {
+                pass();
+            }
+        }, 42);
+    }
+
+    @Test
+    public void observerFails() {
+        a(new Object() {
+            public void observe(final @Observes Integer event) {
+                throw new RuntimeException("testing exceptions");
+            }
+
+            public void fails(@Observes ObserverFailed event) {
+                pass();
+            }
+
+            public void passes(@Observes ObserverSucceeded event) {
+                if (!(event.getEvent() instanceof ObserverFailed)) {
+                    fail();
+                }
+            }
+        }, 42);
+    }
 
     @Test
     public void observeAll() {
@@ -230,6 +266,19 @@ public class ObserverFeaturesTest {
             public void beforeDate(final @Observes BeforeEvent<Date> event) {
                 invoked();
             }
+
+            public void fails(@Observes ObserverFailed event) {
+            }
+
+            public void passes(@Observes ObserverSucceeded event) {
+            }
+
+            public void fails(@Observes AfterEvent<ObserverFailed> event) {
+            }
+
+            public void passes(@Observes AfterEvent<ObserverSucceeded> event) {
+            }
+
         }, 42, new Date(), URI.create("foo:bar"));
     }
 
@@ -268,7 +317,6 @@ public class ObserverFeaturesTest {
     @Assert({
             "number.Integer",
             "afterObject.AfterEvent<ObserverFailed{number}>",
-            "afterObject.AfterEvent<ObserverFailed{afterObject}>",
             "afterObject.AfterEvent<Integer>",
     })
     public void circularFailureAfterObject() {
@@ -290,7 +338,6 @@ public class ObserverFeaturesTest {
             "number.Integer",
             "afterObject.AfterEvent<Integer>",
             "failed.ObserverFailed{afterObject}",
-            "afterObject.AfterEvent<ObserverFailed{afterObject}>",
     })
     public void circluarFailureProtection() {
         a(new Object() {
@@ -306,6 +353,11 @@ public class ObserverFeaturesTest {
             public void failed(final @Observes ObserverFailed event) {
                 invoked(Util.description(event));
                 throw new RuntimeException("testing exceptions");
+            }
+            public void fails(@Observes AfterEvent<ObserverFailed> event) {
+            }
+
+            public void passes(@Observes AfterEvent<ObserverSucceeded> event) {
             }
         }, 42);
     }

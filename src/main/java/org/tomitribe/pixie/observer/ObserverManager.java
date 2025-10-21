@@ -513,7 +513,7 @@ public class ObserverManager {
         public void invoke(final Object event) {
             try {
                 method.invoke(observer, event);
-                if (!(event instanceof ObserverSucceeded)) {
+                if (!(resolveEvent(event) instanceof ObserverSucceeded)) {
                     doFire(new ObserverSucceeded(observer, method, event));
                 }
 
@@ -524,7 +524,7 @@ public class ObserverManager {
 
                 final Throwable t = e.getTargetException() == null ? e : e.getTargetException();
 
-                if (!(event instanceof ObserverFailed)) {
+                if (!(resolveEvent(event) instanceof ObserverFailed)) {
                     doFire(new ObserverFailed(observer, method, event, t));
                 }
 
@@ -553,6 +553,16 @@ public class ObserverManager {
             LOGGER.set(value);
         }
         return value;
+    }
+
+    private Object resolveEvent(final Object event) {
+        if (event instanceof BeforeEvent) {
+            return ((BeforeEvent) event).getEvent();
+        } else if (event instanceof AfterEvent) {
+            return ((AfterEvent) event).getEvent();
+        } else {
+            return event;
+        }
     }
 
     private final class AfterInvocation extends MethodInvocation {
