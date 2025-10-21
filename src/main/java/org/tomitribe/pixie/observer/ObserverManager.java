@@ -21,7 +21,6 @@ import org.tomitribe.pixie.event.ObserverAdded;
 import org.tomitribe.pixie.event.ObserverFailed;
 import org.tomitribe.pixie.event.ObserverNotFound;
 import org.tomitribe.pixie.event.ObserverRemoved;
-import org.tomitribe.pixie.event.ObserverSucceeded;
 import org.tomitribe.util.Join;
 
 import java.lang.annotation.Annotation;
@@ -513,9 +512,6 @@ public class ObserverManager {
         public void invoke(final Object event) {
             try {
                 method.invoke(observer, event);
-                if (!(resolveEvent(event) instanceof ObserverSucceeded)) {
-                    doFire(new ObserverSucceeded(observer, method, event));
-                }
 
             } catch (final InvocationTargetException e) {
                 if (!seen.get().add(this)) {

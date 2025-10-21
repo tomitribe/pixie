@@ -13,13 +13,12 @@
  */
 package org.tomitribe.pixie.observer;
 
+import org.junit.Before;
+import org.junit.Test;
 import org.tomitribe.pixie.Observes;
 import org.tomitribe.pixie.event.AfterEvent;
 import org.tomitribe.pixie.event.BeforeEvent;
 import org.tomitribe.pixie.event.ObserverFailed;
-import org.junit.Before;
-import org.junit.Test;
-import org.tomitribe.pixie.event.ObserverSucceeded;
 
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -29,23 +28,6 @@ import java.util.List;
 
 
 public class ObserverFeaturesTest {
-
-    @Test
-    public void observerSucceeds() {
-        a(new Object() {
-            public void observe(final @Observes Integer event) {
-                // nothing here
-            }
-
-            public void fails(@Observes ObserverFailed event) {
-                fail();
-            }
-
-            public void passes(@Observes ObserverSucceeded event) {
-                pass();
-            }
-        }, 42);
-    }
 
     @Test
     public void observerFails() {
@@ -58,11 +40,6 @@ public class ObserverFeaturesTest {
                 pass();
             }
 
-            public void passes(@Observes ObserverSucceeded event) {
-                if (!(event.getEvent() instanceof ObserverFailed)) {
-                    fail();
-                }
-            }
         }, 42);
     }
 
@@ -270,13 +247,7 @@ public class ObserverFeaturesTest {
             public void fails(@Observes ObserverFailed event) {
             }
 
-            public void passes(@Observes ObserverSucceeded event) {
-            }
-
             public void fails(@Observes AfterEvent<ObserverFailed> event) {
-            }
-
-            public void passes(@Observes AfterEvent<ObserverSucceeded> event) {
             }
 
         }, 42, new Date(), URI.create("foo:bar"));
@@ -357,8 +328,6 @@ public class ObserverFeaturesTest {
             public void fails(@Observes AfterEvent<ObserverFailed> event) {
             }
 
-            public void passes(@Observes AfterEvent<ObserverSucceeded> event) {
-            }
         }, 42);
     }
 
