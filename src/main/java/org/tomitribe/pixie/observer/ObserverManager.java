@@ -21,6 +21,7 @@ import org.tomitribe.pixie.event.ObserverAdded;
 import org.tomitribe.pixie.event.ObserverFailed;
 import org.tomitribe.pixie.event.ObserverNotFound;
 import org.tomitribe.pixie.event.ObserverRemoved;
+import org.tomitribe.pixie.event.ObserverSucceeded;
 import org.tomitribe.util.Join;
 
 import java.lang.annotation.Annotation;
@@ -512,6 +513,10 @@ public class ObserverManager {
         public void invoke(final Object event) {
             try {
                 method.invoke(observer, event);
+                if (!(event instanceof ObserverSucceeded)) {
+                    doFire(new ObserverSucceeded(observer, method, event));
+                }
+
             } catch (final InvocationTargetException e) {
                 if (!seen.get().add(this)) {
                     return;
@@ -530,6 +535,7 @@ public class ObserverManager {
                 }
             } catch (final IllegalAccessException e) {
                 ObserverManager.logger().log(Level.SEVERE, method + " can't be invoked, check it is public");
+                throw new NotInvokableObserverException(method + " can't be invoked, check it is public");
             }
         }
 
@@ -593,6 +599,12 @@ public class ObserverManager {
 
     public static class NotAnObserverException extends IllegalArgumentException {
         public NotAnObserverException(final String s) {
+            super(s);
+        }
+    }
+
+    public static class NotInvokableObserverException extends RuntimeException {
+        public NotInvokableObserverException(final String s) {
             super(s);
         }
     }
