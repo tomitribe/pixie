@@ -15,6 +15,7 @@ package org.tomitribe.pixie.comp;
 
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Name;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Before;
@@ -80,7 +81,7 @@ public class NamedComponentNotFoundExceptionTest extends Assert {
 
         public NamedComponentNotFound(
                 final @Name String name,
-                final @Component("dependent") Dependent dependent
+                final @Param("dependent") @Component Dependent dependent
         ) {
         }
     }

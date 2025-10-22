@@ -95,7 +95,7 @@ public class MultipleComponentIssuesExceptionTest extends Assert {
 
         public MultipleComponentIssues(
                 final @Name String name,
-                final @Component("person") Person badSyntax,
+                final @Param("person") @Component Person badSyntax,
                 final @Param("red") String missingOption1,    // MissingRequiredOptionException
                 final @Param("crimson") String missingOption2, // MissingRequiredOptionException
                 final @Param("green") @Default("thing") String green

@@ -45,7 +45,7 @@ public class InvalidConstructorException extends ComponentException {
             c.print("    ");
             if (Constructors.isFullyAnnotated(parameter)) {
                 if (parameter.isAnnotationPresent(Component.class)) {
-                    c.printf("@Component(\"%s\") ", parameter.getAnnotation(Component.class).value());
+                    c.printf("@Component ", parameter.getAnnotation(Component.class));
                 }
                 if (parameter.isAnnotationPresent(Param.class)) {
                     c.printf("@Param(\"%s\") ", parameter.getAnnotation(Param.class).value());
