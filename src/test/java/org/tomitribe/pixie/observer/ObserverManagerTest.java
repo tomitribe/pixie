@@ -64,7 +64,7 @@ public class ObserverManagerTest {
         final CountDownLatch latch = new CountDownLatch(3);
         final FailingObserver failingObserver = new FailingObserver(latch);
         mgr.addObserver(failingObserver);
-        final var consumer = mgr.consumersOf(String.class);
+        final Consumer<String> consumer = mgr.consumersOf(String.class);
         consumer.accept("event1");
         consumer.accept("event2");
         consumer.accept("event3");

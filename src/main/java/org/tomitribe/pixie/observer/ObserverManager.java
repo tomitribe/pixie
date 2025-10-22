@@ -485,7 +485,7 @@ public class ObserverManager {
     private static final Invocation IGNORE = new Invocation() {
         @Override
         public void invoke(final Object event) {
-            final var name = event.getClass().getName();
+            final String name = event.getClass().getName();
             if (!name.startsWith("org.tomitribe.pixie.event.") && !(event instanceof ObserverNotFound)) {
                 ObserverManager.logger().info("No observers for event " + name); // not really an error, just informational
                 // doFire(new ObserverNotFound(event));
