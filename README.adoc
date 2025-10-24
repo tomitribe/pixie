@@ -35,7 +35,7 @@ public class Person {
 
     public Person(@Name final String name,
                   @Param("age") final Integer age,
-                  @Component("address") final Address address) {
+                  @Paran("address") @Component final Address address) {
         this.name = name;
         this.age = age;
         this.address = address;
@@ -234,7 +234,7 @@ If `country` is missing from the config, `"USA"` is used.  Applies to both `@Par
 public final class ShoppingCart {
     private final PaymentProcessor paymentProcessor;
 
-    public ShoppingCart(@Component("processor") final PaymentProcessor paymentProcessor) {
+    public ShoppingCart(@Param("processor") @Component final PaymentProcessor paymentProcessor) {
         this.paymentProcessor = paymentProcessor;
     }
 }
@@ -252,7 +252,11 @@ cart.processor=@stripe
 With the above configuration Pixie will look in the `System` for an object with the
 name `stripe` and inject it as the value of the `processor` when constructing the `ShoppingCart`.
 
-A `ConstructionFailedException` will be thrown if no object with that name is found or if the object found is of the wrong type.
+A `ConstructionFailedException` will be thrown if any of the following scenarios occurs:
+
+ - no `@Param` was provided
+ - no object with that name is found
+ - if the object found is of the wrong type.
 
 .Resolution by type:
 [source,properties]
