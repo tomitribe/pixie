@@ -13,10 +13,10 @@
  */
 package org.tomitribe.pixie.comp;
 
-import org.tomitribe.pixie.Param;
-import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tomitribe.pixie.Param;
+import org.tomitribe.pixie.System;
 import org.tomitribe.util.IO;
 
 import java.io.File;

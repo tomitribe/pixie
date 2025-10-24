@@ -586,7 +586,14 @@ public class System implements Closeable {
 
             if (parameter.isAnnotationPresent(Component.class)) {
 
-                final String referenceName = parameter.getAnnotation(Component.class).value();
+                //@Since 3.0
+                //Now we obtain the reference name from the Param annotation instead.
+                String referenceName = null;
+                try {
+                    referenceName = parameter.getAnnotation(Param.class).value();
+                } catch (final Exception e) {
+                    throw new ConstructionFailedException(declaration.clazz, e);
+                }
                 final Class<?> referenceType = parameter.getType();
 
                 declaration.addReference(referenceName, referenceType, defaultValue, isNullable);
@@ -856,23 +863,25 @@ public class System implements Closeable {
         public class ComponentInjection implements InjectionPoint {
 
             private final Component component;
+            private final Param paramRef;
             private final Parameter parameter;
             private final Default defaultValue;
 
             public ComponentInjection(final Parameter parameter) {
                 this.parameter = parameter;
                 this.component = parameter.getAnnotation(Component.class);
+                this.paramRef = parameter.getAnnotation(Param.class);
                 this.defaultValue = parameter.getAnnotation(Default.class);
             }
 
             @Override
             public Object resolveValue() {
-                // Grab the name as it was configured
-                final Reference reference = Declaration.this.getReference(component.value());
+                // Grab the name as it was configured via the @Param(" ") annotation
+                final Reference reference = Declaration.this.getReference(paramRef.value());
 
                 // The following two should be unreachable statements
                 if (reference == null)
-                    throw new IllegalStateException(String.format("Reference %s is null", component.value()));
+                    throw new IllegalStateException(String.format("Reference %s is null", paramRef.value()));
                 if (reference.getTarget() == null && !reference.isNullable())
                     throw new IllegalStateException(String.format("Reference value %s is null", reference.getName()));
 
@@ -892,7 +901,7 @@ public class System implements Closeable {
                     return instance.getObject();
                 }
 
-                throw new IllegalStateException(String.format("Reference %s should be resolved at this point", component.value()));
+                throw new IllegalStateException(String.format("Reference %s should be resolved at this point", paramRef.value()));
             }
         }
 

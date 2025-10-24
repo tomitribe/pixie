@@ -16,6 +16,7 @@ package org.tomitribe.pixie.comp;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Default;
 import org.tomitribe.pixie.Name;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
@@ -63,7 +64,7 @@ public class AlreadyBuiltReferenceSortingTest extends Assert {
     public static class Universe {
         public Universe(
                 final @Name String name,
-                final @Component("galaxy") @Default(MILKYWAY) Galaxy galaxy
+                final @Param("galaxy") @Component @Default(MILKYWAY) Galaxy galaxy
         ) {
             order.add("Universe{" + name + "}");
         }
@@ -72,7 +73,7 @@ public class AlreadyBuiltReferenceSortingTest extends Assert {
     public static class Galaxy {
         public Galaxy(
                 final @Name String name,
-                final @Component("solarSystem") @Default(HELIOS) SolarSystem SolarSystem
+                final @Param("solarSystem") @Component @Default(HELIOS) SolarSystem SolarSystem
         ) {
             order.add("Galaxy{" + name + "}");
         }
@@ -81,7 +82,7 @@ public class AlreadyBuiltReferenceSortingTest extends Assert {
     public static class SolarSystem {
         public SolarSystem(
                 final @Name String name,
-                final @Component("world") @Default(EARTH) World world
+                final @Param("world") @Component @Default(EARTH) World world
         ) {
             order.add("SolarSystem{" + name + "}");
         }
@@ -90,7 +91,7 @@ public class AlreadyBuiltReferenceSortingTest extends Assert {
     public static class World {
         public World(
                 final @Name String name,
-                final @Component("peace") @Default(SOMEDAY) Peace peace
+                final @Param("peace") @Component @Default(SOMEDAY) Peace peace
         ) {
             order.add("World{" + name + "}");
         }
@@ -105,7 +106,7 @@ public class AlreadyBuiltReferenceSortingTest extends Assert {
     public static class Luna {
         public Luna(
                 @Name final String name,
-                @Component("peace") final Peace peace) {
+                @Param("peace") @Component final Peace peace) {
             order.add("Luna{" + name + "}");
         }
     }

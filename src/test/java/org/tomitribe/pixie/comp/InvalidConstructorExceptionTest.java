@@ -13,14 +13,14 @@
  */
 package org.tomitribe.pixie.comp;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Default;
 import org.tomitribe.pixie.Name;
 import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.net.URI;
 import java.util.Properties;
@@ -51,12 +51,28 @@ public class InvalidConstructorExceptionTest extends Assert {
                 "    @Name String\n" +
                 "    @Param(\"red\") String\n" +
                 "    /* missing */ boolean\n" +
-                "    @Component(\"green\") URI\n" +
+                "    @Component @Param(\"green\") URI\n" +
                 "    @Param(\"blue\") @Default(\"navy\") String\n" +
-                "    @Component(\"unit\") @Default(\"MINUTES\") TimeUnit\n" +
+                "    @Component @Param(\"unit\") @Default(\"MINUTES\") TimeUnit\n" +
                 "    /* missing */ int\n" +
                 "  )\n" +
                 "  Add @Component, @Param or @Name", e.getMessage());
+    }
+
+    /**
+     * @Since 3.0
+     * This test verifies that when a constructor parameter is annotated with @Component
+     * but missing the required @Param annotation, a ConstructionFailedException is thrown.
+     * The @Param annotation is required to provide a name for the component reference.
+     */
+    @Test
+    public void testWrongComponentDeclaration() throws Exception {
+        final System system = new System(new Properties());
+        ConstructionFailedException e = assertThrows(
+                ConstructionFailedException.class,
+                () -> system.get(InvalidComponentConstructor.class)
+        );
+        e.printStackTrace();
     }
 
     @Test
@@ -70,10 +86,20 @@ public class InvalidConstructorExceptionTest extends Assert {
                 @Name String name,
                 @Param("red") String red,
                 boolean fun,
-                @Component("green") URI green,
+                @Param("green") @Component URI green,
                 @Param("blue") @Default("navy") String blue,
-                @Component("unit") @Default("MINUTES") TimeUnit unit,
+                @Param("unit") @Component @Default("MINUTES") TimeUnit unit,
                 int notAnnotated) {
+        }
+    }
+
+
+    public static class InvalidComponentConstructor {
+        public  InvalidComponentConstructor(
+                @Name String name,
+                @Param("red") String red,
+                @Component() URI green,
+                @Param("blue") @Default("navy") String blue){
         }
     }
 }
