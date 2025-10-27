@@ -197,7 +197,7 @@ public class SystemTest extends Assert {
 
         public Person(@Name final String name,
                       @Param("age") @Nullable final Integer age,
-                      @Component("address") final Address address) {
+                      @Param("address")  @Component final Address address) {
             this.name = name;
             this.age = age;
             this.address = address;

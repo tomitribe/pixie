@@ -56,7 +56,7 @@ public class NullableComponentTest extends Assert {
         private final BasicAuth creds;
 
         public NullableOpt(@Name final String name,
-                           @Component("credentials") @Nullable final BasicAuth creds) {
+                           @Param("credentials") @Component @Nullable final BasicAuth creds) {
 
             this.name = name;
             this.creds = creds;

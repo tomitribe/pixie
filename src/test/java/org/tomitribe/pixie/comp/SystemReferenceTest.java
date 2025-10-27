@@ -14,6 +14,7 @@
 package org.tomitribe.pixie.comp;
 
 import org.tomitribe.pixie.Component;
+import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class SystemReferenceTest extends Assert {
 
         private final System system;
 
-        public SystemReference(final @Component("system") System system) {
+        public SystemReference(final @Param("system") @Component System system) {
             this.system = system;
         }
 

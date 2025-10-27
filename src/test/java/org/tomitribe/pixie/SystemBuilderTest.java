@@ -272,6 +272,23 @@ public class SystemBuilderTest extends Assert {
 
     }
 
+    /**
+     * @Since 3.0
+     * This test verifies that when a constructor parameter is annotated with @Component
+     * but missing the required @Param annotation, a ConstructionFailedException is thrown.
+     * The @Param annotation is required to provide a name for the component reference.
+     */
+    @Test(expected = org.tomitribe.pixie.comp.ConstructionFailedException.class)
+    public void componentAnnotationRequiresParamAnnotation() throws Exception {
+
+        final System system = System.builder()
+                .add("home", new Address("820 Roosevelt Street", "River Falls", State.WI, 54022, "USA"))
+                .definition(PersonWithComponentMissingParam.class)
+                .param("age", "37")
+                .comp("address", "@office")
+                .build();
+    }
+
     public static class Person {
 
         private final String name;
@@ -280,7 +297,7 @@ public class SystemBuilderTest extends Assert {
 
         public Person(@Name final String name,
                       @Param("age") @Nullable final Integer age,
-                      @Component("address") final Address address) {
+                      @Param("address") @Component final Address address) {
             this.name = name;
             this.age = age;
             this.address = address;
@@ -305,6 +322,14 @@ public class SystemBuilderTest extends Assert {
                     ", age=" + age +
                     ", address=" + address +
                     '}';
+        }
+    }
+
+    public static class PersonWithComponentMissingParam extends Person {
+        public PersonWithComponentMissingParam(@Name final String name,
+                                      @Param("age") @Nullable final Integer age,
+                                      @Component final Address residence) {
+            super(name, age, residence);
         }
     }
 
