@@ -181,6 +181,19 @@ public class System implements Closeable {
                 .filter(instance -> instance.isAssignableTo(reference.getType()))
                 .collect(Collectors.toList());
 
+        if (reference.getCollectionType() != null) {
+            final Collection<Object> collection = newInstance(reference.getCollectionType());
+            collection.addAll(usableInstances);
+
+            final List<Declaration> usableDeclarations = declarations.stream()
+                    .filter(declaration -> declaration.isAssignableTo(reference.getType()))
+                    .collect(Collectors.toList());
+            collection.addAll(usableDeclarations);
+
+            reference.set(collection);
+            return;
+        }
+
         if (usableInstances.size() > 0) {
             reference.set(usableInstances.get(0));
             return;
@@ -189,13 +202,6 @@ public class System implements Closeable {
         final List<Declaration> usableDeclarations = declarations.stream()
                 .filter(declaration -> declaration.isAssignableTo(reference.getType()))
                 .collect(Collectors.toList());
-
-        if (reference.getCollectionType() != null) {
-            final Collection<Object> collection = newInstance(reference.getCollectionType());
-            collection.addAll(usableDeclarations);
-            reference.set(collection);
-            return;
-        }
 
         if (usableDeclarations.size() > 0) {
             // Our reference points to an to-be-built Declaration

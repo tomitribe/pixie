@@ -19,6 +19,7 @@ import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Name;
 import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
+import org.tomitribe.util.SuperProperties;
 
 import java.util.List;
 import java.util.Properties;
@@ -52,6 +53,33 @@ public class ComponentListByNameTest extends Assert {
         assertEquals("mars", solarSystem.getWorlds().get(2).getName());
     }
 
+    @Test
+    public void testInstances() throws Exception {
+        final Properties properties = new SuperProperties();
+
+        properties.put("helios", "new://" + SolarSystem.class.getName());
+        properties.put("helios.wOrLDs", "@jupiter @earth @mars");
+
+        properties.put("mercury", "new://" + World.class.getName());
+        properties.put("venus", "new://" + World.class.getName());
+        properties.put("jupiter", "new://" + World.class.getName());
+        properties.put("saturn", "new://" + World.class.getName());
+        properties.put("uranus", "new://" + World.class.getName());
+
+        final System system = new System();
+        system.add("earth", new World("earth"));
+        system.add("mars", new World("mars"));
+        system.add("neptune", new World("neptune"));
+        system.load(properties);
+
+        final SolarSystem solarSystem = system.get(SolarSystem.class);
+        assertNotNull(solarSystem);
+        assertEquals(3, solarSystem.getWorlds().size());
+        // Order should be maintained
+        assertEquals("jupiter", solarSystem.getWorlds().get(0).getName());
+        assertEquals("earth", solarSystem.getWorlds().get(1).getName());
+        assertEquals("mars", solarSystem.getWorlds().get(2).getName());
+    }
 
     public static class SolarSystem {
         private final List<World> worlds;

@@ -62,6 +62,43 @@ public class ComponentListByTypeTest extends Assert {
     }
 
 
+    @Test
+    public void testInstances() throws Exception {
+        final Properties properties = new SuperProperties();
+
+        properties.put("helios", "new://" + SolarSystem.class.getName());
+
+        properties.put("mercury", "new://" + World.class.getName());
+        properties.put("venus", "new://" + World.class.getName());
+        properties.put("jupiter", "new://" + World.class.getName());
+        properties.put("saturn", "new://" + World.class.getName());
+        properties.put("uranus", "new://" + World.class.getName());
+
+        final System system = new System();
+        system.add("earth", new World("earth"));
+        system.add("mars", new World("mars"));
+        system.add("neptune", new World("neptune"));
+        system.load(properties);
+
+        final SolarSystem solarSystem = system.get(SolarSystem.class);
+        assertNotNull(solarSystem);
+        assertEquals(8, solarSystem.getWorlds().size());
+        assertEquals("earth\n" +
+                        "jupiter\n" +
+                        "mars\n" +
+                        "mercury\n" +
+                        "neptune\n" +
+                        "saturn\n" +
+                        "uranus\n" +
+                        "venus",
+                solarSystem.getWorlds().stream()
+                        .map(World::getName)
+                        .sorted()
+                        .reduce((s, s2) -> s + "\n" + s2)
+                        .get());
+    }
+
+
     public static class SolarSystem {
         private final List<World> worlds;
 
