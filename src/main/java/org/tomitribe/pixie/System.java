@@ -35,23 +35,27 @@ import org.tomitribe.pixie.event.PixieLoad;
 import org.tomitribe.pixie.observer.ObserverManager;
 import org.tomitribe.util.Join;
 import org.tomitribe.util.editor.Converter;
+import org.tomitribe.util.reflect.Generics;
 
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -186,6 +190,13 @@ public class System implements Closeable {
                 .filter(declaration -> declaration.isAssignableTo(reference.getType()))
                 .collect(Collectors.toList());
 
+        if (reference.getCollectionType() != null) {
+            final Collection<Object> collection = newInstance(reference.getCollectionType());
+            collection.addAll(usableDeclarations);
+            reference.set(collection);
+            return;
+        }
+
         if (usableDeclarations.size() > 0) {
             // Our reference points to an to-be-built Declaration
             reference.set(usableDeclarations.get(0));
@@ -205,6 +216,40 @@ public class System implements Closeable {
     }
 
     private void resolveByTypeAndName(final List<Declaration> declarations, final Declaration.Reference reference) {
+
+        if (reference.getCollectionType() != null) {
+            final Collection<Object> collection = newInstance(reference.getCollectionType());
+            final String target = (String) reference.getTarget();
+
+            for (final String name : target.split("\\s*@")) {
+                final List<Instance> usableInstances = objects.stream()
+                        .filter(instance -> instance.isAssignableTo(reference.getType()))
+                        .filter(instance -> name.equalsIgnoreCase(instance.getName()))
+                        .collect(Collectors.toList());
+
+                if (usableInstances.size() > 0) {
+                    collection.add(usableInstances.get(0));
+                    continue;
+                }
+
+                final List<Declaration> usableDeclarations = declarations.stream()
+                        .filter(declaration -> declaration.isAssignableTo(reference.getType()))
+                        .filter(declaration -> name.equalsIgnoreCase(declaration.getName()))
+                        .collect(Collectors.toList());
+
+                if (usableDeclarations.size() > 0) {
+                    // Our reference points to an to-be-built Declaration
+                    collection.add(usableDeclarations.get(0));
+                    continue;
+                }
+
+                throw new NamedComponentNotFoundException(name, reference.getType());
+            }
+
+            reference.set(collection);
+            return;
+        }
+
         final String name = (String) reference.getTarget();
 
         final List<Instance> usableInstances = objects.stream()
@@ -488,7 +533,7 @@ public class System implements Closeable {
     }
 
     private List<ComponentException> applyExplicitOverrides(final Declaration declaration) {
-        if (declaration.getName() == null) return Collections.EMPTY_LIST;
+        if (declaration.getName() == null) return java.util.Collections.EMPTY_LIST;
 
         final String prefix = declaration.getName().toLowerCase() + ".";
 
@@ -538,7 +583,7 @@ public class System implements Closeable {
                         LOGGER.warning("Warning: Unused property '" + entry.getKey() + "' in " + declaration.getClazz().getName());
                     });
 
-            return Collections.emptyList();
+            return java.util.Collections.emptyList();
         } else {
             return overrides.entrySet().stream()
                     .filter(isSupported.negate())
@@ -580,7 +625,7 @@ public class System implements Closeable {
     }
 
     private static <T> void loadAnnotatedDefaults(final Declaration<T> declaration) {
-        for (final Parameter parameter : declaration.constructor.getParameters()) {
+        for (final org.tomitribe.util.reflect.Parameter parameter : org.tomitribe.util.reflect.Reflection.params(declaration.constructor)) {
             final String defaultValue = getDefault(parameter);
             final boolean isNullable = parameter.isAnnotationPresent(Nullable.class);
 
@@ -592,11 +637,18 @@ public class System implements Closeable {
                 try {
                     referenceName = parameter.getAnnotation(Param.class).value();
                 } catch (final Exception e) {
+                    // TODO Convert to an exception that advises the user
+                    // to put the @Param annotation on the parameter
                     throw new ConstructionFailedException(declaration.clazz, e);
                 }
                 final Class<?> referenceType = parameter.getType();
 
-                declaration.addReference(referenceName, referenceType, defaultValue, isNullable);
+                if (Collection.class.isAssignableFrom(referenceType)) {
+                    final Type type = Generics.getType(parameter);
+                    declaration.addCollectionReference(referenceName, (Class<?>) type, defaultValue, isNullable, referenceType);
+                } else {
+                    declaration.addReference(referenceName, referenceType, defaultValue, isNullable);
+                }
 
             } else if (parameter.isAnnotationPresent(Param.class)) {
 
@@ -607,7 +659,7 @@ public class System implements Closeable {
         }
     }
 
-    private static String getDefault(final Parameter parameter) {
+    private static String getDefault(final org.tomitribe.util.reflect.Parameter parameter) {
         final Default annotation = parameter.getAnnotation(Default.class);
         return annotation == null ? null : annotation.value();
     }
@@ -619,6 +671,7 @@ public class System implements Closeable {
         private final Constructor<T> constructor;
         private final Map<String, ParamValue> params = new HashMap<>();
         private final List<InjectionPoint> injectionPoints = new ArrayList<>();
+        private final Map<String, Reference> referencess = new HashMap<>();
         private T instance;
 
         public Declaration(final String name, final Class clazz) {
@@ -717,12 +770,15 @@ public class System implements Closeable {
             }
         }
 
-        private final Map<String, Reference> referencess = new HashMap<>();
 
         public List<Reference> getUnresolvedReferences() {
             return referencess.values().stream()
                     .filter(Reference::isUnresolved)
                     .collect(Collectors.toList());
+        }
+
+        public void addCollectionReference(final String name, final Class<?> type, final String defaultValue, final boolean isNullable, final Class<?> collectionType) {
+            this.referencess.put(name.toLowerCase(), new Reference(name, type, defaultValue, isNullable, collectionType));
         }
 
         public void addReference(final String name, final Class<?> type, final String defaultValue, final boolean isNullable) {
@@ -742,25 +798,48 @@ public class System implements Closeable {
          * This is used for sorting the dependency chain
          */
         public Set<String> getDeclarationReferences() {
-            return referencess.values().stream()
-                    .map(Reference::getTarget)
-                    .filter(o -> o instanceof Declaration)
-                    .map(Declaration.class::cast)
-                    .map(Declaration::getReferenceId)
-                    .collect(Collectors.toSet());
+            final Set<String> ids = new LinkedHashSet<>();
+
+            for (final Reference reference : referencess.values()) {
+                final Object target = reference.getTarget();
+
+                if (target instanceof Declaration) {
+                    final Declaration<?> declaration = (Declaration<?>) target;
+                    ids.add(declaration.getReferenceId());
+                    continue;
+                }
+
+                if (target instanceof Collection) {
+                    final Collection<?> collection = (Collection<?>) target;
+                    for (final Object element : collection) {
+                        if (element instanceof Declaration) {
+                            final Declaration<?> declaration = (Declaration<?>) element;
+                            ids.add(declaration.getReferenceId());
+                        }
+                    }
+                }
+            }
+
+            return ids;
         }
 
         public class Reference {
             private final String name;
             private final Class<?> type;
+            private final Class<?> collectionType;
             private Object target;
             private boolean isNullable;
 
             public Reference(final String name, final Class<?> type, final Object target, final boolean isNullable) {
+                this(name, type, target, isNullable, null);
+            }
+
+            public Reference(final String name, final Class<?> type, final Object target, final boolean isNullable, final Class<?> collectionType) {
                 this.name = name;
                 this.type = type;
                 this.target = target;
                 this.isNullable = isNullable;
+                this.collectionType = collectionType;
             }
 
             public String getName() {
@@ -769,6 +848,10 @@ public class System implements Closeable {
 
             public Class<?> getType() {
                 return type;
+            }
+
+            public Class<?> getCollectionType() {
+                return collectionType;
             }
 
             public void set(final Object referenceId) {
@@ -890,6 +973,24 @@ public class System implements Closeable {
                     return null;
 
                 final Object target = reference.getTarget();
+
+                if (target instanceof Collection) {
+                    final Collection collection = (Collection) target;
+                    final Collection<Object> copy = newInstance(collection.getClass());
+                    for (final Object object : collection) {
+                        if (object instanceof Declaration) {
+                            final Declaration declaration = (Declaration) object;
+                            copy.add(declaration.getInstance());
+                        }
+
+                        if (object instanceof Instance) {
+                            final Instance instance = (Instance) object;
+                            copy.add(instance.getObject());
+                        }
+                    }
+
+                    return copy;
+                }
 
                 if (target instanceof Declaration) {
                     final Declaration declaration = (Declaration) target;
@@ -1433,6 +1534,49 @@ public class System implements Closeable {
             return system;
         }
 
+    }
+
+
+    static Collection<Object> newInstance(final Class<?> collectionType) {
+        if (collectionType == null) {
+            throw new IllegalArgumentException("collectionType must not be null");
+        }
+
+        if (!Collection.class.isAssignableFrom(collectionType)) {
+            throw new IllegalArgumentException("Not a Collection type: " + collectionType.getName());
+        }
+
+        /*
+         * If it's a concrete class, just instantiate it.
+         */
+        if (!collectionType.isInterface()
+                && !java.lang.reflect.Modifier.isAbstract(collectionType.getModifiers())) {
+            try {
+                return (Collection<Object>) collectionType.getDeclaredConstructor().newInstance();
+            } catch (final Exception e) {
+                throw new IllegalStateException("Failed to instantiate collection type: " + collectionType.getName(), e);
+            }
+        }
+
+        /*
+         * Interfaces / abstract types: choose sane defaults.
+         */
+        if (List.class.isAssignableFrom(collectionType)) {
+            return new ArrayList<>();
+        }
+
+        if (Set.class.isAssignableFrom(collectionType)) {
+            return new LinkedHashSet<>();
+        }
+
+        if (Queue.class.isAssignableFrom(collectionType)) {
+            return new ArrayDeque<>();
+        }
+
+        /*
+         * Fallback — very rare, but keeps behavior predictable.
+         */
+        throw new IllegalStateException("Unsupported Collection type: " + collectionType.getName());
     }
 
 }
