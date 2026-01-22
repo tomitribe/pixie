@@ -20,6 +20,7 @@ import org.tomitribe.pixie.comp.Constructors;
 import org.tomitribe.pixie.comp.EventReferences;
 import org.tomitribe.pixie.comp.InjectionPoint;
 import org.tomitribe.pixie.comp.InvalidConstructorException;
+import org.tomitribe.pixie.comp.InvalidFactoryMethodException;
 import org.tomitribe.pixie.comp.InvalidNullableWithDefaultException;
 import org.tomitribe.pixie.comp.InvalidParamValueException;
 import org.tomitribe.pixie.comp.MissingComponentClassException;
@@ -41,6 +42,8 @@ import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
@@ -65,6 +68,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class is designed to never be seen.  We want to discourage
@@ -631,7 +635,7 @@ public class System implements Closeable {
     }
 
     private static <T> void loadAnnotatedDefaults(final Declaration<T> declaration) {
-        for (final org.tomitribe.util.reflect.Parameter parameter : org.tomitribe.util.reflect.Reflection.params(declaration.constructor)) {
+        for (final org.tomitribe.util.reflect.Parameter parameter : declaration.getProducer().getParams()) {
             final String defaultValue = getDefault(parameter);
             final boolean isNullable = parameter.isAnnotationPresent(Nullable.class);
 
@@ -674,7 +678,7 @@ public class System implements Closeable {
         private final String name;
         private final String sortingName;
         private final Class<T> clazz;
-        private final Constructor<T> constructor;
+        private final Producer<T> producer;
         private final Map<String, ParamValue> params = new HashMap<>();
         private final List<InjectionPoint> injectionPoints = new ArrayList<>();
         private final Map<String, Reference> referencess = new HashMap<>();
@@ -682,11 +686,15 @@ public class System implements Closeable {
 
         public Declaration(final String name, final Class clazz) {
             this.name = name;
-            this.clazz = clazz;
-            this.constructor = Constructors.findConstructor(this.clazz);
+            this.producer = producer(clazz);
+            this.clazz = producer.getType();
             this.sortingName = (name != null) ? name : clazz.getSimpleName() + java.lang.System.nanoTime();
 
             loadAnnotatedDefaults(this);
+        }
+
+        public Producer<T> getProducer() {
+            return producer;
         }
 
         public String getReferenceId() {
@@ -695,10 +703,6 @@ public class System implements Closeable {
 
         public Class<T> getClazz() {
             return clazz;
-        }
-
-        public Constructor<T> getConstructor() {
-            return constructor;
         }
 
         public boolean isAssignableTo(final Class<?> clazz) {
@@ -729,24 +733,6 @@ public class System implements Closeable {
             this.params.put(paramName.toLowerCase(), new ParamValue(paramName, defaultValue, isNullable));
         }
 
-
-        private List<InjectionPoint> getInjectionPoints(final Constructor<?> constructor) {
-            final List<InjectionPoint> points = new ArrayList<>();
-
-            for (final Parameter parameter : constructor.getParameters()) {
-                points.add(buildInjectionPoint(constructor, parameter));
-            }
-            return points;
-        }
-
-        private InjectionPoint buildInjectionPoint(final Constructor constructor, final Parameter parameter) {
-            if (parameter.isAnnotationPresent(Component.class)) return new Declaration.ComponentInjection(parameter);
-            if (parameter.isAnnotationPresent(Param.class)) return new ParamInjection(parameter);
-            if (parameter.isAnnotationPresent(Name.class)) return new Declaration.NameInjection();
-            if (parameter.isAnnotationPresent(Event.class)) return new Declaration.EventInjection(parameter);
-
-            throw new InvalidConstructorException(constructor.getDeclaringClass(), constructor);
-        }
 
         public class ParamValue {
             private final String name;
@@ -1021,37 +1007,146 @@ public class System implements Closeable {
         }
 
         private T build() {
-            try {
-                // Select the constructor whose parameters are annotated with @Param, @Component or @Name
-                final Constructor<T> constructor = Constructors.findConstructor(clazz);
-
-                // Convert the parameters to InjectionPoint instances
-                buildInjectionPoints(this, constructor);
-
-                // Resolve or create the needed arguments
-                // This may involve creating other components
-                final List<Object> args = getArguments();
-
-                // Call our selected constructor
-                this.instance = constructor.newInstance(args.toArray());
-                return instance;
-            } catch (InvocationTargetException e) {
-                throw new ConstructionFailedException(clazz, e.getCause());
-            } catch (Throwable e) {
-                throw new ConstructionFailedException(clazz, e);
-            }
-        }
-
-        private void buildInjectionPoints(final Declaration declaration, final Constructor<?> constructor) {
-            final List<InjectionPoint> injectionPoints = declaration.getInjectionPoints(constructor);
-            declaration.getInjectionPoints().clear();
-            declaration.getInjectionPoints().addAll(injectionPoints);
+            return instance = producer.build();
         }
 
         private List<Object> getArguments() {
             return this.getInjectionPoints().stream()
                     .map(InjectionPoint::resolveValue)
                     .collect(Collectors.toList());
+        }
+
+        public Producer<T> producer(final Class<?> clazz) {
+            final Method factoryMethod = Stream.of(clazz.getMethods())
+                    .filter(method -> Modifier.isStatic(method.getModifiers()))
+                    .filter(method -> !Void.TYPE.equals(method.getReturnType()))
+                    .filter(method -> !method.getReturnType().isPrimitive())
+                    .filter(method -> method.isAnnotationPresent(Factory.class))
+                    .min(Comparator.comparing(Method::getName))
+                    .orElse(null);
+
+            if (factoryMethod != null) {
+                return new FactoryMethodProducer(factoryMethod);
+            }
+
+            final Class<T> type = (Class<T>) clazz;
+            return new ConstructorProducer(type, Constructors.findConstructor(type));
+        }
+
+        public class ConstructorProducer implements Producer<T> {
+            private final Constructor<T> constructor;
+            private final Class<T> clazz;
+
+            public ConstructorProducer(final Class<T> clazz, final Constructor<T> constructor) {
+                this.constructor = constructor;
+                this.clazz = clazz;
+            }
+
+            @Override
+            public Class<T> getType() {
+                return clazz;
+            }
+
+            public Iterable<org.tomitribe.util.reflect.Parameter> getParams() {
+                return org.tomitribe.util.reflect.Reflection.params(constructor);
+            }
+
+            public T build() {
+                try {
+                    // Convert the parameters to InjectionPoint instances
+                    buildInjectionPoints(Declaration.this, constructor);
+
+                    // Resolve or create the needed arguments
+                    // This may involve creating other components
+                    final List<Object> args = getArguments();
+
+                    // Call our selected constructor
+                    return constructor.newInstance(args.toArray());
+                } catch (InvocationTargetException e) {
+                    throw new ConstructionFailedException(clazz, e.getCause());
+                } catch (Throwable e) {
+                    throw new ConstructionFailedException(clazz, e);
+                }
+            }
+
+            private void buildInjectionPoints(final Declaration declaration, final Constructor<?> constructor) {
+                final List<InjectionPoint> points = new ArrayList<>();
+
+                for (final Parameter parameter : constructor.getParameters()) {
+                    points.add(buildInjectionPoint(constructor, parameter));
+                }
+
+                declaration.getInjectionPoints().clear();
+                declaration.getInjectionPoints().addAll(points);
+            }
+
+            private InjectionPoint buildInjectionPoint(final Constructor constructor, final Parameter parameter) {
+                if (parameter.isAnnotationPresent(Component.class))
+                    return new Declaration.ComponentInjection(parameter);
+                if (parameter.isAnnotationPresent(Param.class)) return new ParamInjection(parameter);
+                if (parameter.isAnnotationPresent(Name.class)) return new Declaration.NameInjection();
+                if (parameter.isAnnotationPresent(Event.class)) return new Declaration.EventInjection(parameter);
+
+                throw new InvalidConstructorException(constructor.getDeclaringClass(), constructor);
+            }
+        }
+
+        public class FactoryMethodProducer implements Producer<T> {
+            private final Method method;
+
+            public FactoryMethodProducer(final Method method) {
+                this.method = method;
+            }
+
+            @Override
+            public Class<T> getType() {
+                return (Class<T>) method.getReturnType();
+            }
+
+            public Iterable<org.tomitribe.util.reflect.Parameter> getParams() {
+                return org.tomitribe.util.reflect.Reflection.params(method);
+            }
+
+            public T build() {
+                try {
+                    // Select the constructor whose parameters are annotated with @Param, @Component or @Name
+
+                    // Convert the parameters to InjectionPoint instances
+                    buildInjectionPoints(Declaration.this, method);
+
+                    // Resolve or create the needed arguments
+                    // This may involve creating other components
+                    final List<Object> args = getArguments();
+
+                    // Call our selected constructor
+                    return (T) method.invoke(null, args.toArray());
+                } catch (InvocationTargetException e) {
+                    throw new ConstructionFailedException(clazz, e.getCause());
+                } catch (Throwable e) {
+                    throw new ConstructionFailedException(clazz, e);
+                }
+            }
+
+            private void buildInjectionPoints(final Declaration declaration, final Method method) {
+                final List<InjectionPoint> points = new ArrayList<>();
+
+                for (final Parameter parameter : method.getParameters()) {
+                    points.add(buildInjectionPoint(method, parameter));
+                }
+
+                declaration.getInjectionPoints().clear();
+                declaration.getInjectionPoints().addAll(points);
+            }
+
+            private InjectionPoint buildInjectionPoint(final Method method, final Parameter parameter) {
+                if (parameter.isAnnotationPresent(Component.class))
+                    return new Declaration.ComponentInjection(parameter);
+                if (parameter.isAnnotationPresent(Param.class)) return new ParamInjection(parameter);
+                if (parameter.isAnnotationPresent(Name.class)) return new Declaration.NameInjection();
+                if (parameter.isAnnotationPresent(Event.class)) return new Declaration.EventInjection(parameter);
+
+                throw new InvalidFactoryMethodException(method.getDeclaringClass(), method);
+            }
         }
 
         @Override
@@ -1072,6 +1167,16 @@ public class System implements Closeable {
         }
 
     }
+
+    public interface Producer<T> {
+
+        T build();
+
+        Iterable<org.tomitribe.util.reflect.Parameter> getParams();
+
+        Class<T> getType();
+    }
+
 
     private Class<?> loadDeclarationClass(final String type) {
         final ClassLoader loader = Thread.currentThread().getContextClassLoader();
