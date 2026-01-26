@@ -13,16 +13,19 @@
  */
 package org.tomitribe.pixie;
 
+import org.tomitribe.pixie.comp.BuilderMethodFailedException;
 import org.tomitribe.pixie.comp.ComponentException;
 import org.tomitribe.pixie.comp.ComponentReferenceSyntaxException;
 import org.tomitribe.pixie.comp.ConstructionFailedException;
 import org.tomitribe.pixie.comp.Constructors;
 import org.tomitribe.pixie.comp.EventReferences;
 import org.tomitribe.pixie.comp.InjectionPoint;
+import org.tomitribe.pixie.comp.InvalidBuildMethodException;
 import org.tomitribe.pixie.comp.InvalidConstructorException;
 import org.tomitribe.pixie.comp.InvalidFactoryMethodException;
 import org.tomitribe.pixie.comp.InvalidNullableWithDefaultException;
 import org.tomitribe.pixie.comp.InvalidParamValueException;
+import org.tomitribe.pixie.comp.MissingBuildMethodException;
 import org.tomitribe.pixie.comp.MissingComponentClassException;
 import org.tomitribe.pixie.comp.MissingComponentDeclarationException;
 import org.tomitribe.pixie.comp.MissingRequiredParamException;
@@ -37,6 +40,7 @@ import org.tomitribe.pixie.observer.ObserverManager;
 import org.tomitribe.util.Join;
 import org.tomitribe.util.editor.Converter;
 import org.tomitribe.util.reflect.Generics;
+import org.tomitribe.util.reflect.Reflection;
 
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
@@ -48,6 +52,7 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1017,16 +1022,29 @@ public class System implements Closeable {
         }
 
         public Producer<T> producer(final Class<?> clazz) {
-            final Method factoryMethod = Stream.of(clazz.getMethods())
+            final List<Method> staticMethods = Stream.of(clazz.getMethods())
                     .filter(method -> Modifier.isStatic(method.getModifiers()))
+                    .filter(method -> Modifier.isPublic(method.getModifiers()))
                     .filter(method -> !Void.TYPE.equals(method.getReturnType()))
                     .filter(method -> !method.getReturnType().isPrimitive())
+                    .collect(Collectors.toList());
+
+            final Method factoryMethod = staticMethods.stream()
                     .filter(method -> method.isAnnotationPresent(Factory.class))
                     .min(Comparator.comparing(Method::getName))
                     .orElse(null);
 
             if (factoryMethod != null) {
                 return new FactoryMethodProducer(factoryMethod);
+            }
+
+            final Method builderMethod = staticMethods.stream()
+                    .filter(method -> method.isAnnotationPresent(Builder.class))
+                    .min(Comparator.comparing(Method::getName))
+                    .orElse(null);
+
+            if (builderMethod != null) {
+                return new BuilderProducer(builderMethod);
             }
 
             final Class<T> type = (Class<T>) clazz;
@@ -1141,6 +1159,111 @@ public class System implements Closeable {
             private InjectionPoint buildInjectionPoint(final Method method, final Parameter parameter) {
                 if (parameter.isAnnotationPresent(Component.class))
                     return new Declaration.ComponentInjection(parameter);
+                if (parameter.isAnnotationPresent(Param.class)) return new ParamInjection(parameter);
+                if (parameter.isAnnotationPresent(Name.class)) return new Declaration.NameInjection();
+                if (parameter.isAnnotationPresent(Event.class)) return new Declaration.EventInjection(parameter);
+
+                throw new InvalidFactoryMethodException(method.getDeclaringClass(), method);
+            }
+        }
+
+        public class BuilderProducer implements Producer<T> {
+            private final Method builderMethod;
+            private final Class<?> builderClass;
+            private final Method buildMethod;
+            private final List<Method> methods;
+
+            public BuilderProducer(final Method builderMethod) {
+                this.builderMethod = builderMethod;
+                this.builderClass = builderMethod.getReturnType();
+
+                final List<Method> buildMethods = Stream.of(builderClass.getMethods())
+                        .filter(method -> method.getName().equals("build"))
+                        .collect(Collectors.toList());
+
+                if (buildMethods.size() == 0) {
+                    throw new MissingBuildMethodException(builderClass);
+                }
+
+                this.buildMethod = buildMethods.stream()
+                        .filter(method -> Modifier.isPublic(method.getModifiers()))
+                        .filter(method -> !Modifier.isStatic(method.getModifiers()))
+                        .filter(method -> method.getParameterCount() == 0)
+                        .findFirst()
+                        .orElseThrow(() -> new InvalidBuildMethodException(builderClass));
+
+                this.methods = Arrays.stream(builderClass.getMethods())
+                        .filter(method -> Modifier.isPublic(method.getModifiers()))
+                        .filter(method -> !Modifier.isStatic(method.getModifiers()))
+                        .filter(method -> method.getParameterCount() == 1)
+                        .filter(method -> isInjectionPoint(method.getParameters()[0]))
+                        .collect(Collectors.toList());
+
+            }
+
+            private boolean isInjectionPoint(final Parameter parameter) {
+                return parameter.isAnnotationPresent(Param.class)
+                        || parameter.isAnnotationPresent(Component.class)
+                        || parameter.isAnnotationPresent(Event.class)
+                        || parameter.isAnnotationPresent(Name.class);
+            }
+
+            @Override
+            public Class<T> getType() {
+                return (Class<T>) buildMethod.getReturnType();
+            }
+
+            public Iterable<org.tomitribe.util.reflect.Parameter> getParams() {
+                final List<org.tomitribe.util.reflect.Parameter> all = new ArrayList<>();
+
+                for (final Method method : methods) {
+                    for (final org.tomitribe.util.reflect.Parameter parameter : Reflection.params(method)) {
+                        all.add(parameter);
+                    }
+                }
+
+                return all;
+            }
+
+            public T build() {
+                try {
+                    // Call the builder() method and get the builder instance
+                    final Object builder;
+                    try {
+                        builder = builderMethod.invoke(null);
+                    } catch (InvocationTargetException e) {
+                        throw new BuilderMethodFailedException(builderMethod, e.getCause());
+                    } catch (Throwable e) {
+                        throw new BuilderMethodFailedException(builderMethod, e);
+                    }
+
+
+                    // Convert the parameters to InjectionPoint instances
+                    for (final Method method : methods) {
+                        final Parameter parameter = method.getParameters()[0];
+                        final InjectionPoint injectionPoint = buildInjectionPoint(method, parameter);
+                        final Object value = injectionPoint.resolveValue();
+
+                        try {
+                            method.invoke(builder, value);
+                        } catch (InvocationTargetException e) {
+                            throw new BuilderMethodFailedException(method, e.getCause());
+                        } catch (Throwable e) {
+                            throw new BuilderMethodFailedException(method, e);
+                        }
+                    }
+
+                    // Call our selected constructor
+                    return (T) buildMethod.invoke(builder);
+                } catch (InvocationTargetException e) {
+                    throw new ConstructionFailedException(clazz, e.getCause());
+                } catch (Throwable e) {
+                    throw new ConstructionFailedException(clazz, e);
+                }
+            }
+
+            private InjectionPoint buildInjectionPoint(final Method method, final Parameter parameter) {
+                if (parameter.isAnnotationPresent(Component.class)) return new Declaration.ComponentInjection(parameter);
                 if (parameter.isAnnotationPresent(Param.class)) return new ParamInjection(parameter);
                 if (parameter.isAnnotationPresent(Name.class)) return new Declaration.NameInjection();
                 if (parameter.isAnnotationPresent(Event.class)) return new Declaration.EventInjection(parameter);

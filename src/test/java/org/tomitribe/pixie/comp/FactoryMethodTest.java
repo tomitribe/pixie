@@ -17,19 +17,26 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Default;
+import org.tomitribe.pixie.Event;
 import org.tomitribe.pixie.Factory;
 import org.tomitribe.pixie.Name;
 import org.tomitribe.pixie.Nullable;
+import org.tomitribe.pixie.Observes;
 import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 
-import java.util.Properties;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
-public class ComponentFactoryMethodTest extends Assert {
+public class FactoryMethodTest extends Assert {
 
     @Test
     public void test() throws Exception {
         final System system = System.builder()
+
+                .definition(LinkObserver.class, "links")
 
                 .definition(Person.class, "jane")
                 .param("age", 37)
@@ -56,6 +63,15 @@ public class ComponentFactoryMethodTest extends Assert {
         assertEquals(State.WI, address.getState());
         assertEquals(54022, address.getZipcode());
         assertEquals("USA", address.getCountry());
+
+        final LinkObserver linkObserver = system.get(LinkObserver.class);
+        assertNotNull(linkObserver);
+        assertEquals(0, linkObserver.getUris().size());
+
+        jane.getLinks().accept(URI.create("foo://bar?one=uno"));
+
+        assertEquals(1, linkObserver.getUris().size());
+        assertEquals(URI.create("foo://bar?one=uno"), linkObserver.getUris().get(0));
     }
 
     public static class Person {
@@ -63,13 +79,16 @@ public class ComponentFactoryMethodTest extends Assert {
         private final String name;
         private final Integer age;
         private final Address address;
+        private final Consumer<URI> links;
 
         private Person(final String name,
                       final Integer age,
-                      final Address address) {
+                      final Address address,
+                       final Consumer<URI> links) {
             this.name = name;
             this.age = age;
             this.address = address;
+            this.links = links;
         }
 
         public String getName() {
@@ -84,11 +103,16 @@ public class ComponentFactoryMethodTest extends Assert {
             return address;
         }
 
+        public Consumer<URI> getLinks() {
+            return links;
+        }
+
         @Factory
         public static Person factorylicious(@Name final String name,
                                             @Param("age") @Nullable final Integer age,
-                                            @Param("address") @Component final Address address) {
-            return new Person(name, age, address);
+                                            @Param("address") @Component final Address address,
+                                            @Event final Consumer<URI> links) {
+            return new Person(name, age, address, links);
         }
 
         @Override
@@ -100,6 +124,19 @@ public class ComponentFactoryMethodTest extends Assert {
                     '}';
         }
     }
+
+    public static class LinkObserver {
+        final List<URI> uris = new ArrayList<>();
+
+        public void observe(@Observes URI uri) {
+            this.uris.add(uri);
+        }
+
+        public List<URI> getUris() {
+            return uris;
+        }
+    }
+
 
     public static class Address {
         private final String street;
