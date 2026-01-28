@@ -15,7 +15,7 @@ It can handle any scenario where you would use reflection to instantiate a Java 
 
 == Example
 
-Let's imagine we want to use Pixie to configure and build two classes we've created called `Person` and `Address`.
+Let's imagine we want to use Pixie to configure and build two classes we've created called `Messages` and `Address`.
 
 Our first step is to annotate the constructor parameters with Pixie annotations.  Pixie will map the configuration to
 our constructor based on the names we use.
@@ -92,7 +92,7 @@ home.country = USA
 ----
 
 The following code would build a Pixie `System` via a `java.util.Properties` instance and lookup
-the `Person` instance by type.
+the `Messages` instance by type.
 
 [source,java]
 ----

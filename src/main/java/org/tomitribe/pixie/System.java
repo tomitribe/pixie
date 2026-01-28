@@ -14,6 +14,7 @@
 package org.tomitribe.pixie;
 
 import org.tomitribe.pixie.comp.BuilderMethodFailedException;
+import org.tomitribe.pixie.comp.Builders;
 import org.tomitribe.pixie.comp.ComponentException;
 import org.tomitribe.pixie.comp.ComponentReferenceSyntaxException;
 import org.tomitribe.pixie.comp.ConstructionFailedException;
@@ -38,6 +39,7 @@ import org.tomitribe.pixie.event.PixieClose;
 import org.tomitribe.pixie.event.PixieLoad;
 import org.tomitribe.pixie.observer.ObserverManager;
 import org.tomitribe.util.Join;
+import org.tomitribe.util.SuperProperties;
 import org.tomitribe.util.editor.Converter;
 import org.tomitribe.util.reflect.Generics;
 import org.tomitribe.util.reflect.Reflection;
@@ -50,6 +52,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1172,7 +1175,12 @@ public class System implements Closeable {
             private final Class<?> builderClass;
             private final Method buildMethod;
             private final List<Method> methods;
+            private final Class<T> producedType;
 
+            /**
+             * The builderMethod must be the public static method annotated with @Builder
+             * @param builderMethod
+             */
             public BuilderProducer(final Method builderMethod) {
                 this.builderMethod = builderMethod;
                 this.builderClass = builderMethod.getReturnType();
@@ -1185,6 +1193,14 @@ public class System implements Closeable {
                     throw new MissingBuildMethodException(builderClass);
                 }
 
+                /**
+                 * The build method must follow the format of:
+                 * `public Foo build()`
+                 *
+                 * Generics may be used: (TODO)
+                 * `public T build()`
+                 *
+                 */
                 this.buildMethod = buildMethods.stream()
                         .filter(method -> Modifier.isPublic(method.getModifiers()))
                         .filter(method -> !Modifier.isStatic(method.getModifiers()))
@@ -1192,12 +1208,15 @@ public class System implements Closeable {
                         .findFirst()
                         .orElseThrow(() -> new InvalidBuildMethodException(builderClass));
 
+                this.producedType = (Class<T>) Builders.resolveBuiltType(builderMethod, builderClass, buildMethod);
+
                 this.methods = Arrays.stream(builderClass.getMethods())
                         .filter(method -> Modifier.isPublic(method.getModifiers()))
                         .filter(method -> !Modifier.isStatic(method.getModifiers()))
                         .filter(method -> method.getParameterCount() == 1)
                         .filter(method -> isInjectionPoint(method.getParameters()[0]))
                         .collect(Collectors.toList());
+
 
             }
 
@@ -1210,7 +1229,7 @@ public class System implements Closeable {
 
             @Override
             public Class<T> getType() {
-                return (Class<T>) buildMethod.getReturnType();
+                return producedType;
             }
 
             public Iterable<org.tomitribe.util.reflect.Parameter> getParams() {
@@ -1337,7 +1356,7 @@ public class System implements Closeable {
 
         private final AtomicInteger refs = new AtomicInteger(100);
 
-        private final Properties properties = new Properties();
+        private final Properties properties = new SuperProperties();
 
         private final HashMap<String, Object> objects = new HashMap<>();
 
