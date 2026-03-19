@@ -191,42 +191,42 @@ public class BuilderClassTest extends Assert {
         WI, MN, CA;
     }
 
-public static class PersonBuilder {
+    public static class PersonBuilder {
 
-    private String name;
-    private Integer age;
-    private Address address;
-    private Consumer<URI> links;
+        private String name;
+        private Integer age;
+        private Address address;
+        private Consumer<URI> links;
 
-    public PersonBuilder name(@Name final String name) {
-        this.name = name;
-        return this;
+        public PersonBuilder name(@Name final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public PersonBuilder age(@Param("age") @Nullable final Integer age) {
+            this.age = age;
+            return this;
+        }
+
+        public PersonBuilder address(@Param("address") @Component final Address address) {
+            this.address = address;
+            return this;
+        }
+
+        public PersonBuilder link(@Event final Consumer<URI> links) {
+            this.links = links;
+            return this;
+        }
+
+        public Person build() {
+            return new Person(name, age, address, links);
+        }
+
+        @org.tomitribe.pixie.Builder
+        public static PersonBuilder builder() {
+            return new PersonBuilder();
+        }
     }
-
-    public PersonBuilder age(@Param("age") @Nullable final Integer age) {
-        this.age = age;
-        return this;
-    }
-
-    public PersonBuilder address(@Param("address") @Component final Address address) {
-        this.address = address;
-        return this;
-    }
-
-    public PersonBuilder link(@Event final Consumer<URI> links) {
-        this.links = links;
-        return this;
-    }
-
-    public Person build() {
-        return new Person(name, age, address, links);
-    }
-
-    @org.tomitribe.pixie.Builder
-    public static PersonBuilder builder() {
-        return new PersonBuilder();
-    }
-}
 
     public static class AddressBuilder {
 
