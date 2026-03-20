@@ -37,6 +37,22 @@ public class Person {
 
 Pixie reads the annotations and wires everything together — no XML, no classpath scanning, no magic.
 
+## Configuration: Properties or Plain Java
+
+Pixie offers two ways to configure your components — key-value properties or the fluent `System.builder()` API in plain Java. Both are first-class; use whichever fits your situation, or mix them.
+
+Properties are an intentional design choice. They are the lowest common denominator across deployment environments, and they map directly to the configuration mechanisms found in cloud platforms:
+
+- **AWS Systems Manager Parameter Store** — key-value pairs, often hierarchical
+- **Kubernetes ConfigMaps and Secrets** — key-value data mounted as files or environment variables
+- **Docker / OCI** — environment variables and `.env` files
+- **HashiCorp Consul / Vault** — key-value stores for config and secrets
+- **Spring Cloud Config, etcd, ZooKeeper** — all key-value at their core
+
+Because Pixie reads from a standard `java.util.Properties` object, you can load configuration from any of these sources — or from a local file during development. The source doesn't matter; Pixie just sees key-value pairs.
+
+For scenarios where properties files aren't a fit, the `System.builder()` API lets you wire components in plain Java with no configuration files at all. You can also mix both approaches — load a base configuration from properties and add or override components programmatically.
+
 ## No Proxies
 
 Unlike CDI, Pixie does not generate proxies or subclasses around your objects. When Pixie constructs a `Person`, you get an actual `Person` — not a `Person$$Proxy` wrapping the real instance behind an interceptor chain.
