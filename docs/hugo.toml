@@ -6,6 +6,7 @@ title = 'Pixie Documentation'
   description = 'Documentation for Pixie by Tomitribe'
   brand = 'Pixie'
   tagline = 'by Tomitribe'
+  image = 'images/social-card.png'
 
 [markup]
   [markup.highlight]

@@ -1,0 +1,26 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2d2d2d"/>
+      <stop offset="100%" stop-color="#1c1917"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Orange accent bar -->
+  <rect width="1200" height="4" y="626" fill="#e57125"/>
+  <!-- Decorative circles -->
+  <circle cx="1050" cy="80" r="200" fill="#e57125" opacity="0.06"/>
+  <circle cx="100" cy="550" r="140" fill="#e57125" opacity="0.05"/>
+  <circle cx="950" cy="500" r="60" fill="#e57125" opacity="0.08" rx="16" transform="rotate(45 950 500)"/>
+  <!-- Brand -->
+  <text x="80" y="200" font-family="system-ui, -apple-system, sans-serif" font-size="84" font-weight="800" fill="#ffffff" letter-spacing="-2">Dependency injection</text>
+  <text x="80" y="296" font-family="system-ui, -apple-system, sans-serif" font-size="84" font-weight="800" fill="#e57125" letter-spacing="-2">without the magic.</text>
+  <!-- Subtitle -->
+  <text x="80" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="32" fill="#9ca3af">Configuration, constructor injection, and events in a tiny Java jar.</text>
+  <!-- Badge -->
+  <rect x="80" y="430" width="340" height="40" rx="20" fill="#e57125" opacity="0.12" stroke="#e57125" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="250" y="457" font-family="ui-monospace, monospace" font-size="16" fill="#e57125" text-anchor="middle" letter-spacing="0.5">~100KB  ·  Zero overhead  ·  Java 8+</text>
+  <!-- Pixie name -->
+  <text x="80" y="570" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="800" fill="#e57125">Pixie</text>
+  <text x="192" y="570" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#6b7280"> by Tomitribe</text>
+</svg>
