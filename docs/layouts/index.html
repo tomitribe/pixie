@@ -1,45 +1,123 @@
 {{ define "main" }}
+<!-- Hero -->
 <section class="hero">
-    <h1>
-        <span class="accent">Pixie</span> Documentation
-    </h1>
-    <p>A tiny ~100KB jar for configuration, dependency injection, and events. Build Java objects from properties files or a fluent builder API.</p>
-    <a href="{{ "getting-started/" | relURL }}" class="cta">
-        Get Started
-        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-    </a>
+    <div class="hero-shape hero-shape-1"></div>
+    <div class="hero-shape hero-shape-2"></div>
+    <div class="hero-shape hero-shape-3"></div>
+    <div class="hero-inner">
+        <div class="hero-badge">~100KB &middot; Zero overhead &middot; Java 8+</div>
+        <h1>Dependency injection<br><span class="accent">without the magic.</span></h1>
+        <p class="hero-sub">Configuration, constructor injection, and events in a tiny jar.<br>No proxies. No field injection. No framework lock-in.</p>
+        <div class="hero-actions">
+            <a href="{{ "getting-started/" | relURL }}" class="cta-primary">Get Started</a>
+            <a href="https://github.com/tomitribe/pixie" class="cta-outline" target="_blank" rel="noopener">GitHub</a>
+        </div>
+    </div>
 </section>
 
-<section class="doc-cards">
-    {{ range .Site.Sections }}
-    <a href="{{ .RelPermalink }}" class="doc-card">
-        <div class="card-icon">
-            <svg viewBox="0 0 24 24">
-                {{ if eq .Title "Getting Started" }}
-                <polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline>
-                {{ else if eq .Title "Annotations" }}
-                <circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path>
-                {{ else if eq .Title "References" }}
-                <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line>
-                {{ else if eq .Title "Producers" }}
-                <path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path>
-                {{ else if eq .Title "Events" }}
-                {{ else if eq .Title "Testing" }}
-                <path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-                {{ else if eq .Title "Configuration" }}
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>
-                {{ else if eq .Title "Changelog" }}
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>
-                {{ else }}
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>
-                {{ end }}
-            </svg>
+<!-- What Pixie does differently -->
+<section class="features-section">
+    <h2>What makes Pixie different</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 48 48" fill="none" stroke-width="1.5"><circle cx="24" cy="24" r="16" stroke="var(--orange)" /><circle cx="24" cy="24" r="6" stroke="var(--orange)" /><line x1="24" y1="2" x2="24" y2="8" stroke="var(--orange)" /><line x1="24" y1="40" x2="24" y2="46" stroke="var(--orange)" /><line x1="2" y1="24" x2="8" y2="24" stroke="var(--orange)" /><line x1="40" y1="24" x2="46" y2="24" stroke="var(--orange)" /></svg>
+            </div>
+            <h3>No Proxies</h3>
+            <p>Your objects are real objects. Clean stack traces, full JVM speed, and GraalVM native-image friendly.</p>
         </div>
-        <h3>{{ .Title }}</h3>
-        {{ with .Params.description }}
-        <p>{{ . }}</p>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 48 48" fill="none" stroke-width="1.5"><rect x="6" y="6" width="36" height="36" rx="4" stroke="var(--orange)" /><path d="M6 18h36M18 18v24" stroke="var(--orange)" /><circle cx="12" cy="12" r="2" fill="var(--orange)" /><circle cx="12" cy="28" r="2" fill="var(--orange)" /><circle cx="12" cy="36" r="2" fill="var(--orange)" /></svg>
+            </div>
+            <h3>Properties or Code</h3>
+            <p>Configure from key-value properties — maps to AWS SSM, K8s ConfigMaps, Consul. Or wire in plain Java.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 48 48" fill="none" stroke-width="1.5"><path d="M16 6l-10 18h12l-2 18 20-24H24l4-12z" stroke="var(--orange)" /></svg>
+            </div>
+            <h3>Built-in Events</h3>
+            <p>Fire with <code>@Event Consumer&lt;T&gt;</code>, observe with <code>@Observes</code>. Polymorphic dispatch and exception isolation.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 48 48" fill="none" stroke-width="1.5"><path d="M24 6v12M12 24H6M42 24h-6M14 14l-4-4M34 14l4-4" stroke="var(--orange)" /><circle cx="24" cy="30" r="12" stroke="var(--orange)" /><path d="M18 30h12M24 24v12" stroke="var(--orange)" opacity="0.5" /></svg>
+            </div>
+            <h3>No Lock-in</h3>
+            <p>Every class works with <code>new</code>. Remove Pixie and your code still compiles. Safe for any team size.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 48 48" fill="none" stroke-width="1.5"><rect x="8" y="8" width="14" height="14" rx="3" stroke="var(--orange)" /><rect x="26" y="8" width="14" height="14" rx="3" stroke="var(--orange)" /><rect x="8" y="26" width="14" height="14" rx="3" stroke="var(--orange)" /><rect x="26" y="26" width="14" height="14" rx="3" stroke="var(--orange)" /><circle cx="15" cy="15" r="2" fill="var(--orange)" /><circle cx="33" cy="15" r="2" fill="var(--orange)" /><circle cx="15" cy="33" r="2" fill="var(--orange)" /><circle cx="33" cy="33" r="2" fill="var(--orange)" /></svg>
+            </div>
+            <h3>Four Producers</h3>
+            <p>Constructors, <code>@Factory</code> methods, <code>@Builder</code> patterns, or pre-built instances. Use what fits.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 48 48" fill="none" stroke-width="1.5"><path d="M10 38l14-30 14 30" stroke="var(--orange)" /><path d="M16 28h16" stroke="var(--orange)" /><circle cx="24" cy="20" r="3" stroke="var(--orange)" /></svg>
+            </div>
+            <h3>Type-Safe Generics</h3>
+            <p><code>Handler&lt;String, Integer&gt;</code> only matches implementations with those exact type arguments. Wildcards included.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Code showcase — side by side -->
+<section class="code-showcase">
+    <div class="code-showcase-inner">
+        <div class="code-showcase-block">
+            <pre><code class="language-java"><span class="chroma"><span class="kd">public class</span> <span class="nc">ShoppingCart</span> <span class="p">{</span>
+
+    <span class="kd">public</span> <span class="nf">ShoppingCart</span><span class="p">(</span>
+            <span class="na">@Param</span><span class="p">(</span><span class="s">"taxRate"</span><span class="p">)</span> <span class="kd">final</span> <span class="kt">double</span> <span class="n">taxRate</span><span class="p">,</span>
+            <span class="na">@Param</span><span class="p">(</span><span class="s">"processor"</span><span class="p">)</span> <span class="na">@Component</span>
+                <span class="kd">final</span> <span class="nc">PaymentProcessor</span> <span class="n">processor</span><span class="p">,</span>
+            <span class="na">@Event</span>
+                <span class="kd">final</span> <span class="nc">Consumer</span><span class="p">&lt;</span><span class="nc">OrderPlaced</span><span class="p">&gt;</span> <span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="c1">// That's it. Plain constructor.</span>
+        <span class="c1">// Works with new. Works with Pixie.</span>
+    <span class="p">}</span>
+<span class="p">}</span></span></code></pre>
+        </div>
+        <div class="code-showcase-text">
+            <h2>Annotate a constructor.<br>Pixie does the rest.</h2>
+            <p><code>@Param</code> maps configuration values. <code>@Component</code> injects dependencies. <code>@Event</code> wires the event system. Your class stays a plain Java class — no base classes, no interfaces, no bytecode generation.</p>
+            <a href="{{ "getting-started/quick-example/" | relURL }}" class="text-link">See the full example &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- Install -->
+<section class="install-section">
+    <div class="install-inner">
+        <pre><code class="language-xml"><span class="chroma"><span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span><span class="n">org.tomitribe.pixie</span><span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span><span class="n">pixie</span><span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span><span class="n">2.0</span><span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span></span></code></pre>
+        <div class="install-text">
+            <h2>Get started in seconds</h2>
+            <p>One dependency. No transitive framework graph. No annotation processors. No code generation.</p>
+            <a href="{{ "getting-started/installation/" | relURL }}" class="text-link-light">Installation guide &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- Doc cards -->
+<section class="home-docs">
+    <h2>Explore the docs</h2>
+    <div class="doc-cards">
+        {{ range .Site.Sections }}
+        <a href="{{ .RelPermalink }}" class="doc-card">
+            <h3>{{ .Title }}</h3>
+            {{ with .Params.description }}
+            <p>{{ . }}</p>
+            {{ end }}
+        </a>
         {{ end }}
-    </a>
-    {{ end }}
+    </div>
 </section>
 {{ end }}
