@@ -1,6 +1,6 @@
 ---
 title: "Events"
-weight: 3
+weight: 4
 description: "Fire and observe events across components"
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "Generics"
-weight: 4
+weight: 5
 description: "Generic type matching for precise component resolution"
 ---
 
