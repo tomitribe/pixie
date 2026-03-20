@@ -21,6 +21,7 @@ import org.tomitribe.pixie.Param;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 
 import static org.junit.Assert.assertEquals;
 import static org.tomitribe.pixie.comp.Builders.resolveBuiltType;
@@ -32,7 +33,7 @@ public class BuildersWildcardsTest {
         final Method builder = ExtendsMessages.class.getMethod("builder");
         final Method build = BuildersTest.ProxyBuilder.class.getMethod("build");
 
-        final Class<?> returnType = resolveBuiltType(builder, BuildersTest.ProxyBuilder.class, build);
+        final Type returnType = resolveBuiltType(builder, BuildersTest.ProxyBuilder.class, build);
         assertEquals(BuildersTest.Messages.class, returnType);
     }
 
@@ -41,7 +42,7 @@ public class BuildersWildcardsTest {
         final Method builder = SuperMessages.class.getMethod("builder");
         final Method build = BuildersTest.ProxyBuilder.class.getMethod("build");
 
-        final Class<?> returnType = resolveBuiltType(builder, BuildersTest.ProxyBuilder.class, build);
+        final Type returnType = resolveBuiltType(builder, BuildersTest.ProxyBuilder.class, build);
         assertEquals(BuildersTest.Messages.class, returnType);
     }
 
@@ -50,7 +51,7 @@ public class BuildersWildcardsTest {
         final Method builder = Unbounded.class.getMethod("builder");
         final Method build = BuildersTest.ProxyBuilder.class.getMethod("build");
 
-        final Class<?> returnType = resolveBuiltType(builder, BuildersTest.ProxyBuilder.class, build);
+        final Type returnType = resolveBuiltType(builder, BuildersTest.ProxyBuilder.class, build);
         assertEquals(Object.class, returnType);
     }
 

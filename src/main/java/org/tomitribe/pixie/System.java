@@ -51,7 +51,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -188,8 +190,10 @@ public class System implements Closeable {
     }
 
     private void resolveByType(final List<Declaration> declarations, final Declaration.Reference reference) {
+        final Type type = reference.getType();
+
         final List<Instance> usableInstances = objects.stream()
-                .filter(instance -> instance.isAssignableTo(reference.getType()))
+                .filter(instance -> instance.isAssignableTo(type))
                 .collect(Collectors.toList());
 
         if (reference.getCollectionType() != null) {
@@ -197,7 +201,7 @@ public class System implements Closeable {
             collection.addAll(usableInstances);
 
             final List<Declaration> usableDeclarations = declarations.stream()
-                    .filter(declaration -> declaration.isAssignableTo(reference.getType()))
+                    .filter(declaration -> declaration.isAssignableTo(type))
                     .collect(Collectors.toList());
             collection.addAll(usableDeclarations);
 
@@ -211,7 +215,7 @@ public class System implements Closeable {
         }
 
         final List<Declaration> usableDeclarations = declarations.stream()
-                .filter(declaration -> declaration.isAssignableTo(reference.getType()))
+                .filter(declaration -> declaration.isAssignableTo(type))
                 .collect(Collectors.toList());
 
         if (usableDeclarations.size() > 0) {
@@ -226,13 +230,14 @@ public class System implements Closeable {
         }
 
         // Attempt to auto-create a declaration based in type
-        final Declaration declaration = createDeclaration(reference.getType(), null);
+        final Declaration declaration = createDeclaration(reference.getRawType(), null);
         reference.set(declaration);
         declarations.add(declaration);
         resolveReferences(declaration, declarations);
     }
 
     private void resolveByTypeAndName(final List<Declaration> declarations, final Declaration.Reference reference) {
+        final Type type = reference.getType();
 
         if (reference.getCollectionType() != null) {
             final Collection<Object> collection = newInstance(reference.getCollectionType());
@@ -240,7 +245,7 @@ public class System implements Closeable {
 
             for (final String name : target.split("\\s*@")) {
                 final List<Instance> usableInstances = objects.stream()
-                        .filter(instance -> instance.isAssignableTo(reference.getType()))
+                        .filter(instance -> instance.isAssignableTo(type))
                         .filter(instance -> name.equalsIgnoreCase(instance.getName()))
                         .collect(Collectors.toList());
 
@@ -250,7 +255,7 @@ public class System implements Closeable {
                 }
 
                 final List<Declaration> usableDeclarations = declarations.stream()
-                        .filter(declaration -> declaration.isAssignableTo(reference.getType()))
+                        .filter(declaration -> declaration.isAssignableTo(type))
                         .filter(declaration -> name.equalsIgnoreCase(declaration.getName()))
                         .collect(Collectors.toList());
 
@@ -260,7 +265,7 @@ public class System implements Closeable {
                     continue;
                 }
 
-                throw new NamedComponentNotFoundException(name, reference.getType());
+                throw new NamedComponentNotFoundException(name, reference.getRawType());
             }
 
             reference.set(collection);
@@ -270,7 +275,7 @@ public class System implements Closeable {
         final String name = (String) reference.getTarget();
 
         final List<Instance> usableInstances = objects.stream()
-                .filter(instance -> instance.isAssignableTo(reference.getType()))
+                .filter(instance -> instance.isAssignableTo(type))
                 .filter(instance -> name.equalsIgnoreCase(instance.getName()))
                 .collect(Collectors.toList());
 
@@ -280,7 +285,7 @@ public class System implements Closeable {
         }
 
         final List<Declaration> usableDeclarations = declarations.stream()
-                .filter(declaration -> declaration.isAssignableTo(reference.getType()))
+                .filter(declaration -> declaration.isAssignableTo(type))
                 .filter(declaration -> name.equalsIgnoreCase(declaration.getName()))
                 .collect(Collectors.toList());
 
@@ -290,7 +295,7 @@ public class System implements Closeable {
             return;
         }
 
-        throw new NamedComponentNotFoundException(name, reference.getType());
+        throw new NamedComponentNotFoundException(name, reference.getRawType());
     }
 
     private List<Declaration> sortDependencies(final List<Declaration> declarations) {
@@ -309,6 +314,67 @@ public class System implements Closeable {
                 return new HashSet<>(declaration.getDeclarationReferences());
             }
         });
+    }
+
+    /**
+     * Check if a requested Type (potentially parameterized) is assignable from a
+     * candidate Type, taking generic type arguments into account.
+     */
+    static boolean isTypeAssignableFrom(final Type requested, final Type candidate) {
+        final Class<?> requestedRaw = rawClass(requested);
+        final Class<?> candidateRaw = rawClass(candidate);
+
+        if (!requestedRaw.isAssignableFrom(candidateRaw)) return false;
+        if (!(requested instanceof ParameterizedType)) return true;
+
+        final Type[] requestedArgs = ((ParameterizedType) requested).getActualTypeArguments();
+        final Type[] candidateArgs = Generics.getTypeParameters(requestedRaw, candidate);
+
+        if (candidateArgs == null) return true;
+        if (requestedArgs.length != candidateArgs.length) return false;
+
+        for (int i = 0; i < requestedArgs.length; i++) {
+            if (!isTypeArgumentAssignable(requestedArgs[i], candidateArgs[i])) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if a single type argument from a requested type is satisfied by an actual type argument.
+     * Handles exact matches, wildcards (? extends X, ? super X), and nested parameterized types.
+     */
+    static boolean isTypeArgumentAssignable(final Type requested, final Type actual) {
+        if (requested.equals(actual)) return true;
+
+        if (requested instanceof WildcardType) {
+            final WildcardType wildcard = (WildcardType) requested;
+
+            // ? extends Foo — actual must be assignable to each upper bound
+            for (final Type upper : wildcard.getUpperBounds()) {
+                if (!isTypeAssignableFrom(upper, actual)) return false;
+            }
+
+            // ? super Foo — actual must be a supertype of each lower bound
+            for (final Type lower : wildcard.getLowerBounds()) {
+                if (!isTypeAssignableFrom(actual, lower)) return false;
+            }
+
+            return true;
+        }
+
+        // Non-wildcard, non-equal — delegate to full assignability check
+        return isTypeAssignableFrom(requested, actual);
+    }
+
+    static Class<?> rawClass(final Type type) {
+        if (type instanceof ParameterizedType) {
+            return (Class<?>) ((ParameterizedType) type).getRawType();
+        }
+        if (type instanceof Class<?>) {
+            return (Class<?>) type;
+        }
+        // TypeVariable, GenericArrayType, WildcardType — best effort
+        return Object.class;
     }
 
     private static Map<String, String> toMap(final Properties properties) {
@@ -346,6 +412,10 @@ public class System implements Closeable {
 
         public boolean isAssignableTo(final Class<?> clazz) {
             return clazz.isAssignableFrom(object.getClass());
+        }
+
+        public boolean isAssignableTo(final Type type) {
+            return isTypeAssignableFrom(type, object.getClass());
         }
 
         public boolean isAnnotationPresent(final Class<? extends Annotation> type) {
@@ -661,10 +731,11 @@ public class System implements Closeable {
                 final Class<?> referenceType = parameter.getType();
 
                 if (Collection.class.isAssignableFrom(referenceType)) {
-                    final Type type = Generics.getType(parameter);
-                    declaration.addCollectionReference(referenceName, (Class<?>) type, defaultValue, isNullable, referenceType);
+                    final Type elementType = Generics.getType(parameter);
+                    declaration.addCollectionReference(referenceName, elementType, defaultValue, isNullable, referenceType);
                 } else {
-                    declaration.addReference(referenceName, referenceType, defaultValue, isNullable);
+                    final Type genericType = parameter.getGenericType();
+                    declaration.addReference(referenceName, genericType, defaultValue, isNullable);
                 }
 
             } else if (parameter.isAnnotationPresent(Param.class)) {
@@ -685,6 +756,7 @@ public class System implements Closeable {
         private final String name;
         private final String sortingName;
         private final Class<T> clazz;
+        private final Type genericType;
         private final Producer<T> producer;
         private final Map<String, ParamValue> params = new HashMap<>();
         private final List<InjectionPoint> injectionPoints = new ArrayList<>();
@@ -695,6 +767,7 @@ public class System implements Closeable {
             this.name = name;
             this.producer = producer(clazz);
             this.clazz = producer.getType();
+            this.genericType = producer.getGenericType();
             this.sortingName = (name != null) ? name : clazz.getSimpleName() + java.lang.System.nanoTime();
 
             loadAnnotatedDefaults(this);
@@ -714,6 +787,10 @@ public class System implements Closeable {
 
         public boolean isAssignableTo(final Class<?> clazz) {
             return clazz.isAssignableFrom(this.clazz);
+        }
+
+        public boolean isAssignableTo(final Type type) {
+            return isTypeAssignableFrom(type, this.genericType);
         }
 
         public List<InjectionPoint> getInjectionPoints() {
@@ -776,11 +853,11 @@ public class System implements Closeable {
                     .collect(Collectors.toList());
         }
 
-        public void addCollectionReference(final String name, final Class<?> type, final String defaultValue, final boolean isNullable, final Class<?> collectionType) {
+        public void addCollectionReference(final String name, final Type type, final String defaultValue, final boolean isNullable, final Class<?> collectionType) {
             this.referencess.put(name.toLowerCase(), new Reference(name, type, defaultValue, isNullable, collectionType));
         }
 
-        public void addReference(final String name, final Class<?> type, final String defaultValue, final boolean isNullable) {
+        public void addReference(final String name, final Type type, final String defaultValue, final boolean isNullable) {
             this.referencess.put(name.toLowerCase(), new Reference(name, type, defaultValue, isNullable));
         }
 
@@ -824,16 +901,16 @@ public class System implements Closeable {
 
         public class Reference {
             private final String name;
-            private final Class<?> type;
+            private final Type type;
             private final Class<?> collectionType;
             private Object target;
             private boolean isNullable;
 
-            public Reference(final String name, final Class<?> type, final Object target, final boolean isNullable) {
+            public Reference(final String name, final Type type, final Object target, final boolean isNullable) {
                 this(name, type, target, isNullable, null);
             }
 
-            public Reference(final String name, final Class<?> type, final Object target, final boolean isNullable, final Class<?> collectionType) {
+            public Reference(final String name, final Type type, final Object target, final boolean isNullable, final Class<?> collectionType) {
                 this.name = name;
                 this.type = type;
                 this.target = target;
@@ -845,8 +922,15 @@ public class System implements Closeable {
                 return name;
             }
 
-            public Class<?> getType() {
+            public Type getType() {
                 return type;
+            }
+
+            public Class<?> getRawType() {
+                if (type instanceof ParameterizedType) {
+                    return (Class<?>) ((ParameterizedType) type).getRawType();
+                }
+                return (Class<?>) type;
             }
 
             public Class<?> getCollectionType() {
@@ -1123,6 +1207,11 @@ public class System implements Closeable {
                 return (Class<T>) method.getReturnType();
             }
 
+            @Override
+            public Type getGenericType() {
+                return method.getGenericReturnType();
+            }
+
             public Iterable<org.tomitribe.util.reflect.Parameter> getParams() {
                 return org.tomitribe.util.reflect.Reflection.params(method);
             }
@@ -1175,6 +1264,7 @@ public class System implements Closeable {
             private final Method buildMethod;
             private final List<Method> methods;
             private final Class<T> producedType;
+            private final Type producedGenericType;
 
             /**
              * The builderMethod must be the public static method annotated with @Builder
@@ -1196,7 +1286,7 @@ public class System implements Closeable {
                  * The build method must follow the format of:
                  * `public Foo build()`
                  *
-                 * Generics may be used: (TODO)
+                 * Generics may be used:
                  * `public T build()`
                  *
                  */
@@ -1207,7 +1297,8 @@ public class System implements Closeable {
                         .findFirst()
                         .orElseThrow(() -> new InvalidBuildMethodException(builderClass));
 
-                this.producedType = (Class<T>) Builders.resolveBuiltType(builderMethod, builderClass, buildMethod);
+                this.producedGenericType = Builders.resolveBuiltType(builderMethod, builderClass, buildMethod);
+                this.producedType = (Class<T>) Builders.toClass(producedGenericType);
 
                 this.methods = Arrays.stream(builderClass.getMethods())
                         .filter(method -> Modifier.isPublic(method.getModifiers()))
@@ -1229,6 +1320,11 @@ public class System implements Closeable {
             @Override
             public Class<T> getType() {
                 return producedType;
+            }
+
+            @Override
+            public Type getGenericType() {
+                return producedGenericType;
             }
 
             public Iterable<org.tomitribe.util.reflect.Parameter> getParams() {
@@ -1316,6 +1412,10 @@ public class System implements Closeable {
         Iterable<org.tomitribe.util.reflect.Parameter> getParams();
 
         Class<T> getType();
+
+        default Type getGenericType() {
+            return getType();
+        }
     }
 
 
@@ -1748,7 +1848,7 @@ public class System implements Closeable {
                         boolean used = false;
                         final Object value = entry.getValue();
                         for (final System.Declaration<?>.Reference reference : declaration.getReferences()) {
-                            if (reference.getType().isAssignableFrom(value.getClass())) {
+                            if (reference.getRawType().isAssignableFrom(value.getClass())) {
                                 used = true;
                             }
                         }

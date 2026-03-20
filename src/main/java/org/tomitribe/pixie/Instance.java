@@ -413,7 +413,7 @@ public class Instance {
                     boolean used = false;
                     final Object value = entry.getValue();
                     for (final System.Declaration<T>.Reference reference : declaration.getReferences()) {
-                        if (reference.getType().isAssignableFrom(value.getClass())) {
+                        if (reference.getRawType().isAssignableFrom(value.getClass())) {
                             used=true;
                         }
                     }
