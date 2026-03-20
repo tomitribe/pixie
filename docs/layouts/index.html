@@ -64,7 +64,7 @@
     </div>
 </section>
 
-<!-- Code showcase — side by side -->
+<!-- Showcase 1: Constructor + Properties -->
 <section class="code-showcase">
     <div class="code-showcase-inner">
         <div class="code-showcase-block">
@@ -77,15 +77,100 @@
             <span class="na">@Event</span>
                 <span class="kd">final</span> <span class="nc">Consumer</span><span class="p">&lt;</span><span class="nc">OrderPlaced</span><span class="p">&gt;</span> <span class="n">event</span><span class="p">)</span> <span class="p">{</span>
 
-        <span class="c1">// That's it. Plain constructor.</span>
-        <span class="c1">// Works with new. Works with Pixie.</span>
+        <span class="c1">// Plain constructor. Works with new.</span>
     <span class="p">}</span>
 <span class="p">}</span></span></code></pre>
         </div>
         <div class="code-showcase-text">
             <h2>Annotate a constructor.<br>Pixie does the rest.</h2>
-            <p><code>@Param</code> maps configuration values. <code>@Component</code> injects dependencies. <code>@Event</code> wires the event system. Your class stays a plain Java class — no base classes, no interfaces, no bytecode generation.</p>
-            <a href="{{ "getting-started/quick-example/" | relURL }}" class="text-link">See the full example &rarr;</a>
+            <p><code>@Param</code> maps configuration values. <code>@Component</code> injects dependencies by type or name. <code>@Event</code> wires the event system. Your class stays plain Java.</p>
+            <a href="{{ "annotations/" | relURL }}" class="text-link">All annotations &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- Showcase 2: Properties config -->
+<section class="code-showcase code-showcase-alt">
+    <div class="code-showcase-inner reverse">
+        <div class="code-showcase-block">
+            <pre><code class="language-properties"><span class="chroma"><span class="na">cart</span> <span class="o">=</span> <span class="s">new://com.example.ShoppingCart</span>
+<span class="na">cart.taxRate</span> <span class="o">=</span> <span class="s">0.08</span>
+<span class="na">cart.processor</span> <span class="o">=</span> <span class="s">@stripe</span>
+
+<span class="na">stripe</span> <span class="o">=</span> <span class="s">new://com.example.StripeProcessor</span>
+<span class="na">stripe.apiKey</span> <span class="o">=</span> <span class="s">sk_live_abc123</span>
+<span class="na">stripe.timeout</span> <span class="o">=</span> <span class="s">30 seconds</span></span></code></pre>
+        </div>
+        <div class="code-showcase-text">
+            <h2>Configure from properties<br>or in plain Java.</h2>
+            <p>Key-value properties map directly to AWS Parameter Store, Kubernetes ConfigMaps, and every cloud platform. Component references use <code>@name</code> syntax. Or skip properties entirely and use <code>System.builder()</code>.</p>
+            <a href="{{ "configuration/" | relURL }}" class="text-link">Configuration guide &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- Showcase 3: Factory + Builder -->
+<section class="code-showcase">
+    <div class="code-showcase-inner">
+        <div class="code-showcase-block">
+            <pre><code class="language-java"><span class="chroma"><span class="c1">// Factory — full control over construction</span>
+<span class="kd">public class</span> <span class="nc">Connection</span> <span class="p">{</span>
+
+    <span class="na">@Factory</span>
+    <span class="kd">public static</span> <span class="nc">Connection</span> <span class="nf">create</span><span class="p">(</span>
+            <span class="na">@Param</span><span class="p">(</span><span class="s">"url"</span><span class="p">)</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">url</span><span class="p">,</span>
+            <span class="na">@Param</span><span class="p">(</span><span class="s">"timeout"</span><span class="p">)</span> <span class="na">@Default</span><span class="p">(</span><span class="s">"30 seconds"</span><span class="p">)</span>
+                <span class="kd">final</span> <span class="nc">Duration</span> <span class="n">timeout</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">return</span> <span class="kd">new</span> <span class="nf">Connection</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Builder — for complex construction</span>
+<span class="kd">public class</span> <span class="nc">Pipeline</span> <span class="p">{</span>
+
+    <span class="na">@Builder</span>
+    <span class="kd">public static</span> <span class="nc">PipelineBuilder</span> <span class="nf">builder</span><span class="p">()</span> <span class="p">{</span>
+        <span class="kd">return new</span> <span class="nf">PipelineBuilder</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span></span></code></pre>
+        </div>
+        <div class="code-showcase-text">
+            <h2>Four ways to<br>create components.</h2>
+            <p>Constructors for simple cases. <code>@Factory</code> methods when you need validation or the constructor is private. <code>@Builder</code> for complex objects with many optional parameters. Or add pre-built instances with <code>system.add()</code>.</p>
+            <a href="{{ "producers/" | relURL }}" class="text-link">Producer types &rarr;</a>
+        </div>
+    </div>
+</section>
+
+<!-- Showcase 4: Events -->
+<section class="code-showcase code-showcase-alt">
+    <div class="code-showcase-inner reverse">
+        <div class="code-showcase-block">
+            <pre><code class="language-java"><span class="chroma"><span class="c1">// Fire events from any component</span>
+<span class="kd">public class</span> <span class="nc">OrderService</span> <span class="p">{</span>
+
+    <span class="kd">public</span> <span class="nf">OrderService</span><span class="p">(</span>
+            <span class="na">@Event</span> <span class="kd">final</span> <span class="nc">Consumer</span><span class="p">&lt;</span><span class="nc">OrderPlaced</span><span class="p">&gt;</span> <span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">this</span><span class="p">.</span><span class="n">event</span> <span class="o">=</span> <span class="n">event</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">place</span><span class="p">(</span><span class="nc">String</span> <span class="n">id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">event</span><span class="p">.</span><span class="nf">accept</span><span class="p">(</span><span class="kd">new</span> <span class="nf">OrderPlaced</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Observe events — no registration needed</span>
+<span class="kd">public class</span> <span class="nc">EmailReceipt</span> <span class="p">{</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">send</span><span class="p">(</span><span class="na">@Observes</span> <span class="nc">OrderPlaced</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">mailer</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">getId</span><span class="p">());</span>
+    <span class="p">}</span>
+<span class="p">}</span></span></code></pre>
+        </div>
+        <div class="code-showcase-text">
+            <h2>Decouple with events.</h2>
+            <p>Inject a <code>Consumer&lt;T&gt;</code> to fire events. Add <code>@Observes</code> to receive them. Polymorphic dispatch, before/after hooks, and exception isolation included. In tests, just pass a lambda — no framework needed.</p>
+            <a href="{{ "events/" | relURL }}" class="text-link">Event system &rarr;</a>
         </div>
     </div>
 </section>
