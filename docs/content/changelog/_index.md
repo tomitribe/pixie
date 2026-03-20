@@ -1,6 +1,6 @@
 ---
 title: "Changelog"
-weight: 7
+weight: 8
 description: "Version history and major features"
 ---
 

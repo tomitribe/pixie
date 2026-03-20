@@ -41,16 +41,20 @@ title = 'Pixie Documentation'
     url = '/events/'
     weight = 5
   [[menu.main]]
+    name = 'Testing'
+    url = '/testing/'
+    weight = 6
+  [[menu.main]]
     name = 'Configuration'
     url = '/configuration/'
-    weight = 6
+    weight = 7
   [[menu.main]]
     name = 'Changelog'
     url = '/changelog/'
-    weight = 7
+    weight = 8
   [[menu.main]]
     name = 'GitHub'
     url = 'https://github.com/tomitribe/pixie'
-    weight = 8
+    weight = 9
     [menu.main.params]
       external = true
