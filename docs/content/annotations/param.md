@@ -23,13 +23,29 @@ public final class User {
 }
 ```
 
-This maps to a properties file entry:
+## Mapping to Properties
+
+The `@Param` value is the property key suffix. In the properties file, each parameter is set as `componentName.paramName = value`:
 
 ```properties
 user = new://org.example.User
 user.username = alice
 user.age = 30
 ```
+
+Here `user.username` maps to `@Param("username")` and `user.age` maps to `@Param("age")`.
+
+### Case Insensitivity
+
+Property keys and `@Param` names are matched **case insensitively**. All of the following are equivalent:
+
+```properties
+user.username = alice
+user.Username = alice
+user.USERNAME = alice
+```
+
+This applies to both the component name prefix and the param name suffix — `User.UserName`, `user.username`, and `USER.USERNAME` all resolve the same way.
 
 ## Type Conversion
 

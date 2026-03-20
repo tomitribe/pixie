@@ -1,6 +1,6 @@
 ---
 title: "Producers"
-weight: 3
+weight: 4
 description: "Four ways to get objects into the Pixie System"
 ---
 
