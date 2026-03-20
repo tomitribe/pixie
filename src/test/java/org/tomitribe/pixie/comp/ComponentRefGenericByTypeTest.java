@@ -17,19 +17,21 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tomitribe.pixie.Component;
 import org.tomitribe.pixie.Name;
+import org.tomitribe.pixie.Nullable;
 import org.tomitribe.pixie.Param;
 import org.tomitribe.pixie.System;
 
 import java.util.Properties;
 
 /**
- * Tests that generic type arguments on @Component parameters are used
- * to narrow which components are eligible for injection.
+ * Tests generic type matching for single @Component refs resolved by type
+ * (the resolveByType code path — no named ref in properties).
  *
  * Covers interfaces, superclasses, exact types, wildcards (extends, super,
- * unbounded), raw types, and multi-level inheritance.
+ * unbounded), raw types, multi-level inheritance, deferred type variables,
+ * nullable, pre-built instances, and nested parameterized wildcard bounds.
  */
-public class ComponentGenericsByTypeTest extends Assert {
+public class ComponentRefGenericByTypeTest extends Assert {
 
     // -----------------------------------------------------------------------
     // Interface — exact type match
@@ -77,7 +79,6 @@ public class ComponentGenericsByTypeTest extends Assert {
     public void interfaceExtendsMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + InterfaceExtendsConsumer.class.getName());
-        // IntStringHandler has <Integer, String> — Integer extends Number
         properties.put("handler", "new://" + IntStringHandler.class.getName());
 
         final System system = new System(properties);
@@ -90,7 +91,6 @@ public class ComponentGenericsByTypeTest extends Assert {
     public void interfaceExtendsNoMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + InterfaceExtendsConsumer.class.getName());
-        // StringIntHandler has <String, Integer> — String does NOT extend Number
         properties.put("handler", "new://" + StringIntHandler.class.getName());
 
         new System(properties);
@@ -104,7 +104,6 @@ public class ComponentGenericsByTypeTest extends Assert {
     public void interfaceSuperMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + InterfaceSuperConsumer.class.getName());
-        // NumberBoolHandler has <Number, Boolean> — Number is a supertype of Integer
         properties.put("handler", "new://" + NumberBoolHandler.class.getName());
 
         final System system = new System(properties);
@@ -117,7 +116,6 @@ public class ComponentGenericsByTypeTest extends Assert {
     public void interfaceSuperNoMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + InterfaceSuperConsumer.class.getName());
-        // StringIntHandler has <String, Integer> — String is NOT a supertype of Integer
         properties.put("handler", "new://" + StringIntHandler.class.getName());
 
         new System(properties);
@@ -140,7 +138,7 @@ public class ComponentGenericsByTypeTest extends Assert {
     }
 
     // -----------------------------------------------------------------------
-    // Superclass — exact type match
+    // Superclass — exact, raw, extends, super, unbounded
     // -----------------------------------------------------------------------
 
     @Test
@@ -177,15 +175,10 @@ public class ComponentGenericsByTypeTest extends Assert {
         assertTrue(consumer.getProcessor() instanceof IntProcessor);
     }
 
-    // -----------------------------------------------------------------------
-    // Superclass — extends wildcard
-    // -----------------------------------------------------------------------
-
     @Test
     public void superclassExtendsMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + SuperclassExtendsConsumer.class.getName());
-        // IntProcessor has Processor<Integer> — Integer extends Number
         properties.put("processor", "new://" + IntProcessor.class.getName());
 
         final System system = new System(properties);
@@ -198,21 +191,15 @@ public class ComponentGenericsByTypeTest extends Assert {
     public void superclassExtendsNoMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + SuperclassExtendsConsumer.class.getName());
-        // StringProcessor has Processor<String> — String does NOT extend Number
         properties.put("processor", "new://" + StringProcessor.class.getName());
 
         new System(properties);
     }
 
-    // -----------------------------------------------------------------------
-    // Superclass — super wildcard
-    // -----------------------------------------------------------------------
-
     @Test
     public void superclassSuperMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + SuperclassSuperConsumer.class.getName());
-        // NumberProcessor has Processor<Number> — Number is a supertype of Integer
         properties.put("processor", "new://" + NumberProcessor.class.getName());
 
         final System system = new System(properties);
@@ -225,15 +212,10 @@ public class ComponentGenericsByTypeTest extends Assert {
     public void superclassSuperNoMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + SuperclassSuperConsumer.class.getName());
-        // StringProcessor has Processor<String> — String is NOT a supertype of Integer
         properties.put("processor", "new://" + StringProcessor.class.getName());
 
         new System(properties);
     }
-
-    // -----------------------------------------------------------------------
-    // Superclass — unbounded wildcard
-    // -----------------------------------------------------------------------
 
     @Test
     public void superclassUnboundedMatchesAny() throws Exception {
@@ -248,15 +230,13 @@ public class ComponentGenericsByTypeTest extends Assert {
     }
 
     // -----------------------------------------------------------------------
-    // Multi-level interface inheritance
+    // Multi-level inheritance
     // -----------------------------------------------------------------------
 
     @Test
     public void multiLevelInterfaceMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + InterfaceExactConsumer.class.getName());
-        // ImprovedStringIntHandler implements ImprovedHandler<String, Integer>
-        // which extends RequestHandler<String, Integer>
         properties.put("handler", "new://" + ImprovedStringIntHandler.class.getName());
 
         final System system = new System(properties);
@@ -265,15 +245,10 @@ public class ComponentGenericsByTypeTest extends Assert {
         assertTrue(consumer.getHandler() instanceof ImprovedStringIntHandler);
     }
 
-    // -----------------------------------------------------------------------
-    // Multi-level superclass inheritance
-    // -----------------------------------------------------------------------
-
     @Test
     public void multiLevelSuperclassMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + SuperclassExactConsumer.class.getName());
-        // SpecialStringProcessor extends StringProcessor extends Processor<String>
         properties.put("processor", "new://" + SpecialStringProcessor.class.getName());
 
         final System system = new System(properties);
@@ -282,22 +257,97 @@ public class ComponentGenericsByTypeTest extends Assert {
         assertTrue(consumer.getProcessor() instanceof SpecialStringProcessor);
     }
 
-    // -----------------------------------------------------------------------
-    // Deferred type variable through abstract class
-    // -----------------------------------------------------------------------
-
     @Test
     public void deferredTypeVariableMatch() throws Exception {
         final Properties properties = new Properties();
         properties.put("consumer", "new://" + InterfaceExactConsumer.class.getName());
-        // DeferredStringIntHandler extends AbstractHandler<String, Integer>
-        // where AbstractHandler<I, O> implements RequestHandler<I, O>
         properties.put("handler", "new://" + DeferredStringIntHandler.class.getName());
 
         final System system = new System(properties);
         final InterfaceExactConsumer consumer = system.get(InterfaceExactConsumer.class);
         assertNotNull(consumer);
         assertTrue(consumer.getHandler() instanceof DeferredStringIntHandler);
+    }
+
+    // -----------------------------------------------------------------------
+    // Nullable
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void nullableReturnsNullWhenNoGenericMatch() throws Exception {
+        final Properties properties = new Properties();
+        properties.put("consumer", "new://" + NullableConsumer.class.getName());
+        properties.put("longBool", "new://" + LongBoolHandler.class.getName());
+
+        final System system = new System(properties);
+        final NullableConsumer consumer = system.get(NullableConsumer.class);
+        assertNotNull(consumer);
+        assertNull(consumer.getHandler());
+    }
+
+    @Test
+    public void nullableInjectsWhenGenericMatches() throws Exception {
+        final Properties properties = new Properties();
+        properties.put("consumer", "new://" + NullableConsumer.class.getName());
+        properties.put("stringInt", "new://" + StringIntHandler.class.getName());
+
+        final System system = new System(properties);
+        final NullableConsumer consumer = system.get(NullableConsumer.class);
+        assertNotNull(consumer);
+        assertTrue(consumer.getHandler() instanceof StringIntHandler);
+    }
+
+    // -----------------------------------------------------------------------
+    // Pre-built instances via System.builder().add()
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void preBuiltInstanceMatchesGeneric() throws Exception {
+        final StringIntHandler handler = new StringIntHandler("manual");
+
+        final System system = System.builder()
+                .add("handler", handler)
+                .definition(InterfaceExactConsumer.class, "consumer")
+                .build();
+
+        final InterfaceExactConsumer consumer = system.get(InterfaceExactConsumer.class);
+        assertNotNull(consumer);
+        assertSame(handler, consumer.getHandler());
+    }
+
+    @Test(expected = ConstructionFailedException.class)
+    public void preBuiltInstanceRejectsWrongGeneric() throws Exception {
+        final LongBoolHandler handler = new LongBoolHandler("manual");
+
+        System.builder()
+                .add("handler", handler)
+                .definition(InterfaceExactConsumer.class, "consumer")
+                .build();
+    }
+
+    // -----------------------------------------------------------------------
+    // Nested parameterized wildcard bound
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void nestedParameterizedWildcardBound() throws Exception {
+        final Properties properties = new Properties();
+        properties.put("consumer", "new://" + ComparableConsumer.class.getName());
+        properties.put("wrapper", "new://" + StringWrapper.class.getName());
+
+        final System system = new System(properties);
+        final ComparableConsumer consumer = system.get(ComparableConsumer.class);
+        assertNotNull(consumer);
+        assertTrue(consumer.getWrapper() instanceof StringWrapper);
+    }
+
+    @Test(expected = ConstructionFailedException.class)
+    public void nestedParameterizedWildcardBoundNoMatch() throws Exception {
+        final Properties properties = new Properties();
+        properties.put("consumer", "new://" + ComparableConsumer.class.getName());
+        properties.put("wrapper", "new://" + UriWrapper.class.getName());
+
+        new System(properties);
     }
 
     // =======================================================================
@@ -425,7 +475,35 @@ public class ComponentGenericsByTypeTest extends Assert {
     }
 
     // =======================================================================
-    // Fixtures — Consumer classes (interface-based injection points)
+    // Fixtures — Wrapper for nested parameterized wildcard test
+    // =======================================================================
+
+    public interface Wrapper<T> {
+        T getValue();
+    }
+
+    public static class StringWrapper implements Wrapper<String> {
+        public StringWrapper(final @Name String name) {
+        }
+
+        @Override
+        public String getValue() {
+            return "hello";
+        }
+    }
+
+    public static class UriWrapper implements Wrapper<java.net.URI> {
+        public UriWrapper(final @Name String name) {
+        }
+
+        @Override
+        public java.net.URI getValue() {
+            return java.net.URI.create("http://example.com");
+        }
+    }
+
+    // =======================================================================
+    // Fixtures — Consumer classes
     // =======================================================================
 
     public static class InterfaceExactConsumer {
@@ -504,10 +582,6 @@ public class ComponentGenericsByTypeTest extends Assert {
         }
     }
 
-    // =======================================================================
-    // Fixtures — Consumer classes (superclass-based injection points)
-    // =======================================================================
-
     public static class SuperclassExactConsumer {
         private final Processor<String> processor;
 
@@ -581,6 +655,36 @@ public class ComponentGenericsByTypeTest extends Assert {
 
         public Processor<?> getProcessor() {
             return processor;
+        }
+    }
+
+    public static class NullableConsumer {
+        private final RequestHandler<String, Integer> handler;
+
+        public NullableConsumer(
+                final @Name String name,
+                final @Param("handler") @Nullable @Component RequestHandler<String, Integer> handler
+        ) {
+            this.handler = handler;
+        }
+
+        public RequestHandler<String, Integer> getHandler() {
+            return handler;
+        }
+    }
+
+    public static class ComparableConsumer {
+        private final Wrapper<? extends Comparable<String>> wrapper;
+
+        public ComparableConsumer(
+                final @Name String name,
+                final @Param("wrapper") @Component Wrapper<? extends Comparable<String>> wrapper
+        ) {
+            this.wrapper = wrapper;
+        }
+
+        public Wrapper<? extends Comparable<String>> getWrapper() {
+            return wrapper;
         }
     }
 }
