@@ -1,0 +1,60 @@
+{{ define "main" }}
+<nav class="breadcrumbs">
+    <a href="{{ "/" | relURL }}">Docs</a>
+    <span class="sep">&#8250;</span>
+    {{ with .CurrentSection }}
+    <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+    <span class="sep">&#8250;</span>
+    {{ end }}
+    <span>{{ .Title }}</span>
+</nav>
+
+<article class="article">
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}
+    <p class="subtitle">{{ . }}</p>
+    {{ end }}
+
+    {{ .Content }}
+</article>
+
+{{/* Prev / Next navigation */}}
+{{ $pages := .CurrentSection.Pages.ByWeight }}
+{{ $currentIndex := 0 }}
+{{ range $i, $p := $pages }}
+    {{ if eq $p $.Page }}
+        {{ $currentIndex = $i }}
+    {{ end }}
+{{ end }}
+
+{{ $prev := false }}
+{{ $next := false }}
+{{ if gt $currentIndex 0 }}
+    {{ $prev = index $pages (sub $currentIndex 1) }}
+{{ end }}
+{{ if lt (add $currentIndex 1) (len $pages) }}
+    {{ $next = index $pages (add $currentIndex 1) }}
+{{ end }}
+
+{{ if or $prev $next }}
+<nav class="page-nav">
+    {{ if $prev }}
+    <a href="{{ $prev.RelPermalink }}" class="prev">
+        <div class="nav-label">&larr; Previous</div>
+        <div class="nav-title">{{ $prev.Title }}</div>
+    </a>
+    {{ else }}
+    <div></div>
+    {{ end }}
+
+    {{ if $next }}
+    <a href="{{ $next.RelPermalink }}" class="next">
+        <div class="nav-label">Next &rarr;</div>
+        <div class="nav-title">{{ $next.Title }}</div>
+    </a>
+    {{ else }}
+    <div></div>
+    {{ end }}
+</nav>
+{{ end }}
+{{ end }}

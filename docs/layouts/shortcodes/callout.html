@@ -1,0 +1,9 @@
+{{/* Usage: {{< callout type="tip" title="Pro Tip" >}} Content here {{< /callout >}} */}}
+<div class="callout {{ .Get "type" | default "" }}">
+    {{ with .Get "title" }}
+    <div class="callout-title">{{ . }}</div>
+    {{ end }}
+    <div class="callout-body">
+        {{ .Inner | markdownify }}
+    </div>
+</div>

@@ -1,0 +1,52 @@
+baseURL = 'https://tomitribe.github.io/pixie/'
+languageCode = 'en-us'
+title = 'Pixie Documentation'
+
+[params]
+  description = 'Documentation for Pixie by Tomitribe'
+  brand = 'Pixie'
+  tagline = 'by Tomitribe'
+
+[markup]
+  [markup.highlight]
+    noClasses = false
+    lineNos = false
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+    ordered = false
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[menu]
+  [[menu.main]]
+    name = 'Docs'
+    url = '/getting-started/'
+    weight = 1
+  [[menu.main]]
+    name = 'Annotations'
+    url = '/annotations/'
+    weight = 2
+  [[menu.main]]
+    name = 'Events'
+    url = '/events/'
+    weight = 3
+  [[menu.main]]
+    name = 'Generics'
+    url = '/generics/'
+    weight = 4
+  [[menu.main]]
+    name = 'Configuration'
+    url = '/configuration/'
+    weight = 5
+  [[menu.main]]
+    name = 'Changelog'
+    url = '/changelog/'
+    weight = 6
+  [[menu.main]]
+    name = 'GitHub'
+    url = 'https://github.com/tomitribe/pixie'
+    weight = 7
+    [menu.main.params]
+      external = true

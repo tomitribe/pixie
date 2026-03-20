@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode | default "en" }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ if not .IsHome }}{{ .Title }} | {{ end }}{{ .Site.Title }}</title>
+    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,300..900;1,300..900&family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ "css/main.css" | relURL }}">
+</head>
+<body{{ if .IsHome }} class="home"{{ end }}>
+
+    <!-- Header -->
+    <header class="site-header">
+        <a href="{{ .Site.BaseURL }}" class="header-brand">
+            <span class="brand-name">{{ .Site.Params.brand | default "Pixie" }}</span>
+            <span class="brand-tagline">{{ .Site.Params.tagline | default "by Tomitribe" }}</span>
+        </a>
+
+        <nav>
+            <ul class="header-nav">
+                {{ range .Site.Menus.main }}
+                <li>
+                    <a href="{{ .URL }}"
+                       {{ if .Params.external }}data-external{{ end }}
+                       {{ with .Params.external }}target="_blank" rel="noopener"{{ end }}>
+                        {{ .Name }}
+                    </a>
+                </li>
+                {{ end }}
+            </ul>
+        </nav>
+
+        <div class="header-spacer"></div>
+
+        <button class="hamburger" id="menu-toggle" aria-label="Toggle navigation">
+            <svg viewBox="0 0 24 24">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+    </header>
+
+    {{ if not .IsHome }}
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        {{ range .Site.Sections }}
+        <div class="nav-section">
+            <a href="{{ .RelPermalink }}" class="nav-section-title">{{ .Title }}</a>
+            <ul class="nav-pages">
+                {{ range .Pages.ByWeight }}
+                <li>
+                    <a href="{{ .RelPermalink }}"{{ if eq . $.Page }} class="active"{{ end }}>
+                        {{ .Title }}
+                    </a>
+                </li>
+                {{ end }}
+            </ul>
+        </div>
+        {{ end }}
+    </nav>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    {{ end }}
+
+    <!-- Main Layout -->
+    <div class="site-layout">
+        <main class="main-content">
+            {{ block "main" . }}{{ end }}
+        </main>
+
+        {{ if and (not .IsHome) (not .IsSection) }}
+        {{ with .TableOfContents }}
+        <aside class="page-toc" id="toc">
+            <div class="toc-heading">On this page</div>
+            <nav>
+                {{ . }}
+            </nav>
+        </aside>
+        {{ end }}
+        {{ end }}
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <p>
+                <span class="footer-brand">{{ .Site.Params.brand | default "Pixie" }}</span>
+                {{ .Site.Params.tagline | default "by Tomitribe" }}
+            </p>
+        </div>
+    </footer>
+
+    <script>
+    (function() {
+        // Mobile sidebar toggle
+        var toggle = document.getElementById('menu-toggle');
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebar-overlay');
+
+        if (toggle && sidebar) {
+            toggle.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
+                if (overlay) overlay.classList.toggle('visible');
+            });
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('visible');
+                });
+            }
+        }
+
+        // Copy buttons on code blocks
+        document.querySelectorAll('.article pre').forEach(function(pre) {
+            var code = pre.querySelector('code');
+            if (!code) return;
+            var btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.textContent = 'Copy';
+            btn.addEventListener('click', function() {
+                navigator.clipboard.writeText(code.textContent).then(function() {
+                    btn.textContent = 'Copied!';
+                    btn.classList.add('copied');
+                    setTimeout(function() {
+                        btn.textContent = 'Copy';
+                        btn.classList.remove('copied');
+                    }, 2000);
+                });
+            });
+            pre.appendChild(btn);
+        });
+
+        // TOC scroll spy
+        var tocLinks = document.querySelectorAll('.page-toc nav a');
+        if (tocLinks.length > 0) {
+            var headings = [];
+            tocLinks.forEach(function(link) {
+                var id = link.getAttribute('href');
+                if (id && id.startsWith('#')) {
+                    var el = document.getElementById(id.slice(1));
+                    if (el) headings.push({ el: el, link: link });
+                }
+            });
+
+            function updateActive() {
+                var scrollTop = window.scrollY + 100;
+                var current = null;
+                headings.forEach(function(h) {
+                    if (h.el.offsetTop <= scrollTop) current = h;
+                });
+                tocLinks.forEach(function(l) { l.classList.remove('active'); });
+                if (current) current.link.classList.add('active');
+            }
+
+            window.addEventListener('scroll', updateActive, { passive: true });
+            updateActive();
+        }
+    })();
+    </script>
+</body>
+</html>

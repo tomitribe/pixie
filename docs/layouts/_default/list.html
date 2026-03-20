@@ -1,0 +1,25 @@
+{{ define "main" }}
+<article class="article">
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.description }}
+    <p class="subtitle">{{ . }}</p>
+    {{ end }}
+
+    {{ .Content }}
+
+    {{ if .Pages }}
+    <ul class="section-list">
+        {{ range .Pages.ByWeight }}
+        <li>
+            <a href="{{ .RelPermalink }}">
+                <div class="page-title">{{ .Title }}</div>
+                {{ with .Params.description }}
+                <div class="page-desc">{{ . }}</div>
+                {{ end }}
+            </a>
+        </li>
+        {{ end }}
+    </ul>
+    {{ end }}
+</article>
+{{ end }}
