@@ -1,0 +1,47 @@
+= Pixie Changelog
+
+== 2.12
+
+=== Generics Support in Component Injection
+
+Component references (`@Component`) now use generic type arguments when resolving which
+components are eligible for injection. Previously, only the raw type was considered — a
+parameter of type `RequestHandler<String, Integer>` would match any `RequestHandler`
+implementation. Now, only implementations with matching type arguments are injected.
+
+This applies to:
+
+- **Single `@Component` refs** resolved by type or by name
+- **Collection injection** (`List<RequestHandler<String, Integer>>`) — only matching implementations are collected
+- **All producer types** — constructor-based, `@Factory` methods, `@Builder` patterns, and pre-built instances via `system.add()`
+
+==== Wildcard Support
+
+Injection points can use Java wildcards:
+
+- `? extends Number` — matches any subtype of Number
+- `? super Integer` — matches any supertype of Integer
+- `?` — matches any type argument (unbounded)
+- Nested parameterized bounds such as `? extends Comparable<String>`
+
+==== Mixed Generic Resolution
+
+Type arguments can come from multiple sources and are correctly stitched together:
+
+- Some from the factory/builder method declaration
+- Others from the class hierarchy of the produced type
+
+For example, a factory returning `BooleanHandler<String>` where `BooleanHandler<I> implements RequestHandler<I, Boolean>`
+correctly resolves to `RequestHandler<String, Boolean>`.
+
+==== Backwards Compatibility
+
+Raw type injection points (no generics) continue to match any implementation, preserving
+full backwards compatibility with existing code.
+
+==== Builder Generic Return Types
+
+`Builders.resolveBuiltType()` now returns `Type` instead of `Class<?>`, preserving
+generic type information from the builder pattern. This allows builders with generic
+`build()` methods (returning `T` or `RequestHandler<I, O>`) to participate in
+generics-aware component matching.
