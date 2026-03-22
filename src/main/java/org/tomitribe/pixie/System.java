@@ -17,6 +17,7 @@ import org.tomitribe.pixie.comp.BuilderMethodFailedException;
 import org.tomitribe.pixie.comp.Builders;
 import org.tomitribe.pixie.comp.ComponentException;
 import org.tomitribe.pixie.comp.ComponentReferenceSyntaxException;
+import org.tomitribe.pixie.comp.ComponentNotFoundForTypeException;
 import org.tomitribe.pixie.comp.ConstructionFailedException;
 import org.tomitribe.pixie.comp.Constructors;
 import org.tomitribe.pixie.comp.EventReferences;
@@ -229,8 +230,16 @@ public class System implements Closeable {
             return;
         }
 
+        final Class<?> rawType = reference.getRawType();
+
+        // Interfaces and abstract classes cannot be auto-created — an implementation
+        // must be provided to the System explicitly
+        if (rawType.isInterface() || Modifier.isAbstract(rawType.getModifiers())) {
+            throw new ComponentNotFoundForTypeException(rawType, reference.getDeclaration().getClazz());
+        }
+
         // Attempt to auto-create a declaration based in type
-        final Declaration declaration = createDeclaration(reference.getRawType(), null);
+        final Declaration declaration = createDeclaration(rawType, null);
         reference.set(declaration);
         declarations.add(declaration);
         resolveReferences(declaration, declarations);
