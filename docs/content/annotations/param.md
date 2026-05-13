@@ -144,6 +144,78 @@ cache.maxSize = 64 mb
 
 `Size` accepts formats like `10kb`, `2.5 mb`, `1 gigabyte`, `512 bytes`.
 
+### Collections and Maps
+
+A single property can be injected as a `List`, `Set`, or `Map` by declaring the parameter with a generic element type. Each element of the value goes through the normal conversion chain, so any type that works as a scalar `@Param` also works as a collection element.
+
+#### Lists and Sets
+
+Values are split on commas (surrounding whitespace is tolerated):
+
+```java
+public class FeedReader {
+    public FeedReader(@Param("uris") final List<URI> uris) {
+        // ...
+    }
+}
+```
+
+```properties
+reader = new://org.example.FeedReader
+reader.uris = http://one, http://two/dos
+```
+
+Supported collection types:
+
+| Declared type | Implementation |
+|---------------|----------------|
+| `List`, `Collection`, `ArrayList` | `ArrayList` |
+| `Set`, `HashSet` | `HashSet` |
+| `SortedSet`, `TreeSet` | `TreeSet` |
+
+The element type can be any type the converter supports — primitives, enums, `URI`, `File`, `Duration`, `Size`, custom types with a `Constructor(String)` or a static factory, etc.
+
+```java
+public class Scheduler {
+    public Scheduler(@Param("units") final Set<TimeUnit> units,
+                     @Param("delays") final List<Duration> delays) {
+        // ...
+    }
+}
+```
+
+```properties
+scheduler = new://org.example.Scheduler
+scheduler.units = SECONDS, MINUTES, HOURS
+scheduler.delays = 30 seconds, 5 minutes, 1 hour
+```
+
+#### Maps
+
+Values use the standard Java properties format — one `key=value` pair per line — and both keys and values go through the converter:
+
+```java
+public class Quotas {
+    public Quotas(@Param("limits") final Map<String, Integer> limits) {
+        // ...
+    }
+}
+```
+
+In code, the value is a multi-line string:
+
+```java
+properties.setProperty("quotas", "new://org.example.Quotas");
+properties.setProperty("quotas.limits", "alpha=10\nbeta=25\ngamma=100");
+```
+
+Supported map types:
+
+| Declared type | Implementation |
+|---------------|----------------|
+| `Map`, `HashMap` | `HashMap` |
+| `SortedMap`, `TreeMap` | `TreeMap` |
+
 ### Custom Types
 
 Any class you write that has a `public Constructor(String)` automatically works as a `@Param` type:

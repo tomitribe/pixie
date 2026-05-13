@@ -1,5 +1,46 @@
 = Pixie Changelog
 
+== 2.13
+
+=== Collections and Maps in `@Param`
+
+A single configuration property can now be injected as a `List`, `Set`, or `Map`
+when the parameter declares a generic element type. Each element passes through
+the normal `@Param` conversion chain, so any type usable as a scalar `@Param`
+also works as a collection element.
+
+[source,java]
+----
+public class FeedReader {
+    public FeedReader(@Param("uris") final List<URI> uris) {
+        // ...
+    }
+}
+----
+
+[source,properties]
+----
+reader = new://org.example.FeedReader
+reader.uris = http://one, http://two/dos
+----
+
+Lists and sets split on commas (surrounding whitespace is tolerated). Maps use
+the standard Java properties format — one `key=value` pair per line — and both
+keys and values are converted.
+
+Supported declared types:
+
+- `List`, `Collection`, `ArrayList` → `ArrayList`
+- `Set`, `HashSet` → `HashSet`
+- `SortedSet`, `TreeSet` → `TreeSet`
+- `Map`, `HashMap` → `HashMap`
+- `SortedMap`, `TreeMap` → `TreeMap`
+
+==== Backwards Compatibility
+
+Scalar `@Param` injection is unchanged. Raw `List`/`Map` declarations (no
+generic element type) fall back to `String` elements.
+
 == 2.12
 
 === Generics Support in Component Injection
