@@ -1028,7 +1028,11 @@ public class System implements Closeable {
                 }
 
                 try {
-                    return Converter.convert(param.getValue(), parameter.getType(), parameterName);
+                    final Class<?> rawType = parameter.getType();
+                    if (Collection.class.isAssignableFrom(rawType) || Map.class.isAssignableFrom(rawType)) {
+                        return Converter.convertString(param.getValue(), parameter.getParameterizedType(), parameterName);
+                    }
+                    return Converter.convert(param.getValue(), rawType, parameterName);
                 } catch (Exception e) {
                     throw new InvalidParamValueException(Declaration.this.clazz, e, parameterName, param.getValue(), parameter.getType());
                 }
