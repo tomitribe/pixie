@@ -9,7 +9,7 @@ It can handle any scenario where you would use reflection to instantiate a Java 
 <dependency>
   <groupId>org.tomitribe.pixie</groupId>
   <artifactId>pixie</artifactId>
-  <version>2.0</version>
+  <version>2.13</version>
 </dependency>
 ----
 
