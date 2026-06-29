@@ -52,4 +52,4 @@ public void beforeInt(@Observes final BeforeEvent<Integer> event) { ... }
 public void afterDate(@Observes final AfterEvent<Date> event) { ... }
 ```
 
-Supertype matching works too — `BeforeEvent<Number>` will fire before any `Integer`, `Long`, or `Double` event. `AfterEvent<Object>` fires after every event.
+Supertype matching works too — `BeforeEvent<Number>` will fire before any `Integer`, `Long`, or `Double` event, and `AfterEvent<Object>` fires after every event. The generic argument may be an interface as well as a class, and the same most-specific selection and ambiguity rules described in [Observing Events](../observing-events/) apply to it.

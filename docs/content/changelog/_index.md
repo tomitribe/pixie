@@ -4,6 +4,15 @@ weight: 8
 description: "Version history and major features"
 ---
 
+## 2.14 — Interface Observers
+
+`@Observes` methods may now declare an **interface** parameter, not just a class. Event dispatch resolves the most-specific matching observer across the full type graph — classes and interfaces — using the same "most specific wins" rule the JVM applies to overloaded method calls.
+
+- **Interface observation** — `@Observes Auditable` receives any event whose type implements `Auditable`
+- **Most-specific selection** — across the combined class/interface lattice, per component
+- **Ambiguity is an error, not a guess** — when an event matches two unrelated observed interfaces with no common subtype, `AmbiguousObserverException` is thrown on fire, mirroring a Java ambiguous-overload compile error
+- **One observer per type** — declaring two `@Observes` methods for the same type on one component is now rejected at registration instead of silently dropping one
+
 ## 2.12 — Generic Type Matching
 
 Component injection (`@Component`) now uses generic type arguments when resolving which components are eligible. A parameter of type `RequestHandler<String, Integer>` will only match implementations with those exact type arguments — previously any `RequestHandler` would match.
