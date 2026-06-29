@@ -388,11 +388,7 @@ public class ObserverManager {
 
         private void validate(final Method method, final Class<?> type) {
             if (type.isAnnotation()) {
-                throw new IllegalArgumentException("@Observes method parameter must be a concrete class (not an annotation): " + method.toString());
-            }
-
-            if (type.isInterface()) {
-                throw new IllegalArgumentException("@Observes method parameter must be a concrete class (not an interface): " + method.toString());
+                throw new IllegalArgumentException("@Observes method parameter must not be an annotation: " + method.toString());
             }
 
             if (type.isArray()) {
@@ -426,13 +422,12 @@ public class ObserverManager {
                 return IGNORE;
             }
 
-            final Invocation method = map.get(eventType);
+            // Among the types this observer registered for this phase, pick the unique
+            // most-specific supertype of the fired type, then look up its handler. No match
+            // -> IGNORE; a genuine diamond -> AmbiguousObserverException.
+            final Class selected = Resolver.bestMatch(eventType, map.keySet());
 
-            if (method != null) {
-                return method;
-            }
-
-            return get(map, eventType.getSuperclass());
+            return selected == null ? IGNORE : map.get(selected);
         }
 
         private boolean isObserver(final Method method) {

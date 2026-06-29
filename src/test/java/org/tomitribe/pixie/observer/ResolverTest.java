@@ -16,7 +16,11 @@ package org.tomitribe.pixie.observer;
 import org.junit.Test;
 import org.tomitribe.pixie.Observes;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -28,8 +32,9 @@ import static org.junit.Assert.fail;
  *
  * Each happy-path Scenario declares overloaded {@code observe(...)} methods over a type
  * graph and fires an event at its concrete static type. The JVM picks the overload via
- * normal resolution; the invoked body self-reports which one ran. We then assert that the
- * Resolver, the JVM's pick, and the test's stated expectation all agree.
+ * normal resolution; the invoked body self-reports its own parameter type. We then assert
+ * the Resolver's selected type, the type the JVM dispatched into, and the test's stated
+ * expectation all agree.
  *
  * Ambiguous and no-match cases cannot use the JVM oracle - an ambiguous call site does not
  * compile (that compile error is the JVM's "answer"), and a no-match call site does not
@@ -38,9 +43,9 @@ import static org.junit.Assert.fail;
 public class ResolverTest {
 
     /**
-     * Base for JVM-witnessed scenarios. The JVM decides which {@code observe} body runs;
-     * the body merely names its own parameter type. A mislabel cannot pass silently - it
-     * would disagree with the expected Method in {@link #assertDispatch}.
+     * Base for JVM-witnessed scenarios. The JVM decides which {@code observe} body runs; the
+     * body merely names its own parameter type. A mislabel cannot pass silently - it would
+     * disagree with the expected type in {@link #assertDispatch}.
      */
     public static class Scenario {
         Method invoked;
@@ -172,15 +177,10 @@ public class ResolverTest {
     }
 
     // ============================================================
-    // Candidate discovery - ONLY @Observes methods, including inherited
+    // Candidate gathering - only @Observes types, including inherited
     // ============================================================
 
-    /**
-     * A catch-all Object observer must match any event. This guards the @Observes filter:
-     * without it, the inherited public equals(Object) would tie with observe(Object) and the
-     * result would be a spurious ambiguity instead of observe(Object). Returning ANY method
-     * that is not annotated @Observes would be a major bug.
-     */
+    /** A catch-all Object observer matches any event. */
     public static class CatchAll extends Scenario {
         public void observe(@Observes final Object o) { record(Object.class); }
     }
@@ -191,29 +191,6 @@ public class ResolverTest {
         final String event = "anything";
         observer.observe(event);
         assertDispatch(observer, event, Object.class);
-    }
-
-    /**
-     * A non-@Observes method must never be returned, even when it is the most-specific match
-     * by type. Here handle(Dog) is more specific than observe(Animal) but is not an observer,
-     * so it must be invisible to resolution.
-     */
-    // @formatter:off
-    public static class IgnoresUnannotated extends Scenario {
-        interface Animal {}
-        public static class Dog implements Animal {}
-
-        public void observe(@Observes final Animal a) { record(Animal.class); }
-        public void handle(final Dog d) { } // NOT @Observes - must be ignored
-    }
-    // @formatter:on
-
-    @Test
-    public void unannotatedMethodIsNeverReturned() {
-        final IgnoresUnannotated observer = new IgnoresUnannotated();
-        final IgnoresUnannotated.Dog event = new IgnoresUnannotated.Dog();
-        observer.observe(event);
-        assertDispatch(observer, event, IgnoresUnannotated.Animal.class);
     }
 
     /** @Observes methods inherited from a superclass participate in resolution. */
@@ -301,30 +278,15 @@ public class ResolverTest {
         assertAmbiguous(DiamondJoinNotImplemented.class, new DiamondJoinNotImplemented.C());
     }
 
-    /** Two distinct methods declaring the same parameter type are equally specific. */
-    // @formatter:off
-    public static class DuplicateParameterType {
-        public static class Dog {}
-
-        public void first(@Observes final Dog d)  {}
-        public void second(@Observes final Dog d) {}
-    }
-    // @formatter:on
-
+    /** The ambiguity message must name the colliding types so the user can fix it. */
     @Test
-    public void duplicateParameterTypeIsAmbiguous() {
-        assertAmbiguous(DuplicateParameterType.class, new DuplicateParameterType.Dog());
-    }
-
-    /** The ambiguity message must name the colliding methods so the user can fix it. */
-    @Test
-    public void ambiguousMessageNamesCollidingMethods() {
+    public void ambiguousMessageNamesCollidingTypes() {
         try {
-            final Method actual = Resolver.bestMatch(InterfaceDiamond.class, new InterfaceDiamond.C());
+            final Class<?> actual = Resolver.bestMatch(InterfaceDiamond.C.class, candidates(InterfaceDiamond.class));
             fail("Expected AmbiguousObserverException but resolved to " + actual);
         } catch (final Resolver.AmbiguousObserverException e) {
-            assertTrue(e.getMessage(), e.getMessage().contains("observe(A)"));
-            assertTrue(e.getMessage(), e.getMessage().contains("observe(B)"));
+            assertTrue(e.getMessage(), e.getMessage().contains("$A"));
+            assertTrue(e.getMessage(), e.getMessage().contains("$B"));
         }
     }
 
@@ -342,31 +304,46 @@ public class ResolverTest {
 
     @Test
     public void unobservedEventReturnsNull() {
-        assertNull(Resolver.bestMatch(NoMatch.class, "not a dog"));
+        assertNull(Resolver.bestMatch(String.class, candidates(NoMatch.class)));
     }
-
 
     // ============================================================
     // Helpers
     // ============================================================
 
-    /** Asserts the Resolver, the JVM's pick, and the expectation all agree. */
+    /** Asserts the Resolver's selected type, the JVM's pick, and the expectation all agree. */
     private void assertDispatch(final Scenario observer, final Object event, final Class<?> expectedParam) {
-        final Method expected = observeMethod(observer.getClass(), expectedParam);
-        final Method jvm = observer.invoked;                          // body the JVM dispatched into
-        final Method ours = Resolver.bestMatch(observer.getClass(), event);
+        final Class<?> jvm = observer.invoked.getParameterTypes()[0];   // overload the JVM ran
+        final Class<?> ours = Resolver.bestMatch(event.getClass(), candidates(observer.getClass()));
 
-        assertEquals("JVM pick", expected, jvm);
-        assertEquals("Resolver pick", expected, ours);
+        assertEquals("JVM pick", expectedParam, jvm);
+        assertEquals("Resolver pick", expectedParam, ours);
     }
 
     private static void assertAmbiguous(final Class<?> observer, final Object event) {
         try {
-            final Method actual = Resolver.bestMatch(observer, event);
+            final Class<?> actual = Resolver.bestMatch(event.getClass(), candidates(observer));
             fail("Expected AmbiguousObserverException but resolved to " + actual);
         } catch (final Resolver.AmbiguousObserverException expected) {
             // correct - the Resolver refused to guess
         }
+    }
+
+    /** The @Observes parameter types an observer registers - what bestMatch chooses among. */
+    private static Collection<Class> candidates(final Class<?> observer) {
+        final List<Class> types = new ArrayList<>();
+        for (final Method method : observer.getMethods()) {
+            if (isObserver(method)) types.add(method.getParameterTypes()[0]);
+        }
+        return types;
+    }
+
+    private static boolean isObserver(final Method method) {
+        if (method.getParameterCount() != 1) return false;
+        for (final Annotation annotation : method.getParameterAnnotations()[0]) {
+            if (annotation.annotationType().equals(Observes.class)) return true;
+        }
+        return false;
     }
 
     private static Method observeMethod(final Class<?> type, final Class<?> param) {

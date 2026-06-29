@@ -18,7 +18,6 @@ import org.tomitribe.pixie.event.AfterEvent;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.Serializable;
 import java.net.URI;
 
 public class InvalidObserversTest extends Assert {
@@ -74,14 +73,6 @@ public class InvalidObserversTest extends Assert {
     }
 
     @Test
-    public void parameterIsInterface() {
-        a(new Object() {
-            public void observe(final @Observes Serializable serializable) {
-            }
-        });
-    }
-
-    @Test
     public void parameterIsPrimitive() {
         a(new Object() {
             public void observe(final @Observes int param) {
@@ -112,16 +103,6 @@ public class InvalidObserversTest extends Assert {
         a(new Object() {
 
             public void observe(final @Observes AfterEvent<T> afterEvent) {
-            }
-
-        });
-    }
-
-    @Test
-    public void typeParameterIsInterface() {
-        a(new Object() {
-
-            public void observe(final @Observes AfterEvent<Serializable> afterEvent) {
             }
 
         });
