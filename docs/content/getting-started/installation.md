@@ -12,14 +12,14 @@ Add the following dependency to your `pom.xml`:
 <dependency>
   <groupId>org.tomitribe.pixie</groupId>
   <artifactId>pixie</artifactId>
-  <version>2.13</version>
+  <version>2.14</version>
 </dependency>
 ```
 
 ## Gradle
 
 ```groovy
-implementation 'org.tomitribe.pixie:pixie:2.13'
+implementation 'org.tomitribe.pixie:pixie:2.14'
 ```
 
 ## Requirements
