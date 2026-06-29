@@ -108,6 +108,28 @@ public class InvalidObserversTest extends Assert {
         });
     }
 
+    @Test
+    public void duplicateObserverType() {
+        a(new Object() {
+            public void observe(final @Observes URI event) {
+            }
+
+            public void observeAgain(final @Observes URI event) {
+            }
+        });
+    }
+
+    @Test
+    public void duplicateAfterEventType() {
+        a(new Object() {
+            public void observe(final @Observes AfterEvent<URI> event) {
+            }
+
+            public void observeAgain(final @Observes AfterEvent<URI> event) {
+            }
+        });
+    }
+
     private void a(final Object observer) {
         try {
             final ObserverManager observers = new ObserverManager();

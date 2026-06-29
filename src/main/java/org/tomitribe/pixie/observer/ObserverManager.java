@@ -290,6 +290,11 @@ public class ObserverManager {
             final Map<Class, Invocation> methods = new HashMap<>();
             final Map<Class, Invocation> after = new HashMap<>();
 
+            // First method claiming each observed type, per phase - used to reject duplicates.
+            final Map<Class, Method> beforeOwners = new HashMap<>();
+            final Map<Class, Method> methodOwners = new HashMap<>();
+            final Map<Class, Method> afterOwners = new HashMap<>();
+
             this.observer = observer;
             for (final Method method : getMethods(observer)) {
                 if (!isObserver(method)) {
@@ -317,16 +322,19 @@ public class ObserverManager {
                 if (AfterEvent.class.equals(type)) {
 
                     final Class parameterClass = getParameterClass(method);
+                    checkUnique(afterOwners, parameterClass, method);
                     after.put(parameterClass, new AfterInvocation(method, observer));
 
                 } else if (BeforeEvent.class.equals(type)) {
 
                     final Class parameterClass = getParameterClass(method);
+                    checkUnique(beforeOwners, parameterClass, method);
                     before.put(parameterClass, new BeforeInvocation(method, observer));
 
                 } else {
 
                     validate(method, type);
+                    checkUnique(methodOwners, type, method);
                     methods.put(type, new MethodInvocation(method, observer));
 
                 }
@@ -384,6 +392,15 @@ public class ObserverManager {
             validate(method, clazz);
 
             return clazz;
+        }
+
+        private void checkUnique(final Map<Class, Method> owners, final Class type, final Method method) {
+            final Method existing = owners.put(type, method);
+            if (existing != null) {
+                throw new IllegalArgumentException("Duplicate @Observes for type " + type.getName()
+                        + ": " + method + " conflicts with " + existing
+                        + ". An observer may declare at most one @Observes method per type; remove or merge one.");
+            }
         }
 
         private void validate(final Method method, final Class<?> type) {
