@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -59,7 +58,6 @@ public class ObserverManager {
     private static final AtomicReference<Logger> LOGGER = new AtomicReference<>();
     private final Set<Observer> observers = new LinkedHashSet<>();
     private final Map<Class, Invocation> methods = new ConcurrentHashMap<>();
-    private final List<ConsumerReference> references = new CopyOnWriteArrayList<>();
 
 
     public boolean addObserver(final Object observer) {
@@ -71,7 +69,6 @@ public class ObserverManager {
             final Observer wrapper = new Observer(observer);
             if (wrapper.hasObserverMethods() && observers.add(wrapper)) {
                 methods.clear();
-                references.stream().forEach(ConsumerReference::clear);
                 fireEvent(new ObserverAdded(observer));
                 return true;
             } else {
@@ -89,7 +86,6 @@ public class ObserverManager {
         try {
             if (observers.remove(new Observer(observer))) {
                 methods.clear();
-                references.stream().forEach(ConsumerReference::clear);
                 fireEvent(new ObserverRemoved(observer));
                 return true;
             } else {
@@ -114,15 +110,12 @@ public class ObserverManager {
 
     public <E> Consumer<E> consumersOf(final Class<E> eventClass) {
         if (eventClass == null) throw new IllegalArgumentException("eventClass cannot be null");
-        final ConsumerReference e = new ConsumerReference(eventClass);
-        references.add(e);
-        return e;
+        return new ConsumerReference(eventClass);
     }
 
     private class ConsumerReference<E> implements Consumer<E> {
 
         private final Class<E> type;
-        private final AtomicReference<Invocation> invocation = new AtomicReference<>();
 
         private ConsumerReference(final Class<E> type) {
             if (type == null) throw new IllegalArgumentException("type cannot be null");
@@ -131,32 +124,21 @@ public class ObserverManager {
 
         @Override
         public void accept(final E e) {
-            try {
-                getInvocation().invoke(e);
-
-            } finally {
-                seen.remove();
+            if (e != null && !type.isInstance(e)) {
+                throw new IllegalArgumentException(
+                        "event " + e.getClass().getName() + " is not a " + type.getName());
             }
-        }
-
-        private Invocation getInvocation() {
-            return this.invocation.updateAndGet(this::resolve);
-        }
-
-        private Invocation resolve(final Invocation invocation) {
-            if (invocation != null) return invocation;
-            return ObserverManager.this.getInvocation(type);
-        }
-
-        private void clear() {
-            invocation.set(null);
+            // Dispatch on the runtime type, exactly like fireEvent, so observers registered
+            // on a subtype of the static type T are reached. The static type is kept only as
+            // a compile-time bound and the runtime assertion above.
+            fireEvent(e);
         }
 
         @Override
         public String toString() {
             return "ConsumerReference{" +
                     "type=" + type.getName() +
-                    "} " + getInvocation();
+                    "} " + ObserverManager.this.getInvocation(type);
         }
     }
 
