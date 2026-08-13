@@ -1880,7 +1880,7 @@ public class System implements Closeable {
             }
         }
 
-        private System build() {
+        public System build() {
             final System system = new System(warnOnUnusedProperties);
 
             /*
