@@ -16,6 +16,8 @@ package org.tomitribe.pixie;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -40,6 +42,8 @@ import java.util.function.Consumer;
  */
 public class EventDispatchDivergenceTest extends Assert {
 
+    private static final List<String> observed = new ArrayList<>();
+
     /** Control: fireEvent dispatches on the runtime type, so the concrete observer fires. */
     @Test
     public void fireEventReachesConcreteObserver() {
@@ -48,20 +52,13 @@ public class EventDispatchDivergenceTest extends Assert {
                 .definition(Logger.class)
                 .definition(Publisher.class)
                 .build();
-        final Probe probe = system.get(Probe.class);
-        final Logger logger = system.get(Logger.class);
-        final Publisher publisher = system.get(Publisher.class);
-        final int anyBefore = probe.any;
-        final int loggerBefore = logger.any;
 
+        observed.clear();
+
+        final Publisher publisher = system.get(Publisher.class);
         publisher.fireEvent(new PatchCreated());
 
-        assertEquals("concrete observer should fire via fireEvent", 1, probe.created);
-        assertEquals("sibling observer must not fire for a PatchCreated", 0, probe.updated);
-        assertEquals("Object observer in the SAME object is shadowed by the more-specific onCreated",
-                anyBefore, probe.any);
-        assertEquals("Object observer in a SEPARATE component should still fire",
-                loggerBefore + 1, logger.any);
+        assertObserved(system, "concrete observer should fire via fireEvent");
     }
 
     /**
@@ -78,20 +75,23 @@ public class EventDispatchDivergenceTest extends Assert {
                 .definition(Logger.class)
                 .definition(Publisher.class)
                 .build();
-        final Probe probe = system.get(Probe.class);
-        final Logger logger = system.get(Logger.class);
-        final Publisher publisher = system.get(Publisher.class);
-        final int anyBefore = probe.any;
-        final int loggerBefore = logger.any;
 
+        observed.clear();
+
+        final Publisher publisher = system.get(Publisher.class);
         publisher.accept(new PatchCreated());
 
-        assertEquals("concrete observer should fire via Consumer<Object>", 1, probe.created);
-        assertEquals("sibling observer must not fire for a PatchCreated", 0, probe.updated);
-        assertEquals("Object observer in the SAME object is shadowed by the more-specific onCreated",
-                anyBefore, probe.any);
-        assertEquals("Object observer in a SEPARATE component should still fire",
-                loggerBefore + 1, logger.any);
+        assertObserved(system, "concrete observer should fire via Consumer<Object>");
+    }
+
+    private static void assertObserved(final System system, final String message) {
+        final String actual = observed.stream().sorted()
+                .reduce((s, s2) -> s + "\n" + s2)
+                .orElse("");
+
+        assertEquals("" +
+                "Logger.onAny(@Observes final Object e)\n" +
+                "Probe.onCreated(@Observes final PatchCreated e)", actual);
     }
 
     // --- event hierarchy: PatchCreated extends PatchChanged (mirrors harminie) ---
@@ -106,20 +106,17 @@ public class EventDispatchDivergenceTest extends Assert {
     }
 
     public static class Probe {
-        private int created;
-        private int updated;
-        private int any;
 
         public void onCreated(@Observes final PatchCreated e) {
-            created++;
+            observed.add("Probe.onCreated(@Observes final PatchCreated e)");
         }
 
         public void onUpdated(@Observes final PatchUpdated e) {
-            updated++;
+            observed.add("Probe.onUpdated(@Observes final PatchUpdated e)");
         }
 
         public void onAny(@Observes final Object e) {
-            any++;
+            observed.add("Probe.onAny(@Observes final Object e)");
         }
     }
 
@@ -129,10 +126,8 @@ public class EventDispatchDivergenceTest extends Assert {
      * a distinct observer contributes its own best match, so it should fire for a PatchCreated too.
      */
     public static class Logger {
-        private int any;
-
         public void onAny(@Observes final Object e) {
-            any++;
+            observed.add("Logger.onAny(@Observes final Object e)");
         }
     }
 
